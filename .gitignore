@@ -1,0 +1,17 @@
+.vscode
+build/
+.xmake/
+.buildme
+
+# Makefile Build Artifacts
+*.o
+*.o.d
+core
+.depend
+.*.cmd
+*.ko
+*.mod.c
+*.tmp_version
+*.mod
+*.order
+*.symvers

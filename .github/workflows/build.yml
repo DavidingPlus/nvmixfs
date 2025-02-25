@@ -1,0 +1,21 @@
+name: Build
+
+on:
+  push:
+    branchs:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check Linux Kernel Version
+      run: |
+
+        lsb_release -a
+
+        uname -r

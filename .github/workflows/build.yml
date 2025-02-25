@@ -9,30 +9,27 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: ubuntu:20.04
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install Linux Kernel Header
-      run: |
+      - name: Install Dependencies
+        run: |
 
-        sudo apt install linux-image-5.4.0-198-generic
+          sudo apt install build-essential
 
-    - name: Install Dependencies
-      run: |
+          curl -fsSL https://xmake.io/shget.text | bash
 
-        sudo apt install build-essential
+      - name: Configure XMake
+        working-directory: ${{github.workspace}}
+        run: |
 
-        curl -fsSL https://xmake.io/shget.text | bash
+          xmake f --linux-headers=/usr/src/linux-headers-5.4.0-198-generic/
+      
+      - name: Build Targets
+        working-directory: ${{github.workspace}}
+        run: |
 
-    - name: Configure XMake
-      working-directory: ${{github.workspace}}
-      run: |
-
-        xmake f --linux-headers=/usr/src/linux-headers-5.4.0-198-generic/
-    
-    - name: Build Targets
-      working-directory: ${{github.workspace}}
-      run: |
-
-        xmake
+          xmake

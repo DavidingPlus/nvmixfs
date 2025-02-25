@@ -8,14 +8,31 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Check Linux Kernel Version
+    - name: Install Linux Kernel Header
       run: |
 
-        lsb_release -a
+        sudo apt install linux-image-5.4.0-198-generic
 
-        uname -r
+    - name: Install Dependencies
+      run: |
+
+        sudo apt install build-essential
+
+        curl -fsSL https://xmake.io/shget.text | bash
+
+    - name: Configure XMake
+      working-directory: ${{github.workspace}}
+      run: |
+
+        xmake f --linux-headers=/usr/src/linux-headers-5.4.0-198-generic/
+    
+    - name: Build Targets
+      working-directory: ${{github.workspace}}
+      run: |
+
+        xmake

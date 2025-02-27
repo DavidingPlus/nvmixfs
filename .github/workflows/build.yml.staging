@@ -18,7 +18,7 @@ jobs:
       - name: Install Dependencies
         run: |
 
-          sudo apt install build-essential
+          apt install build-essential
 
           curl -fsSL https://xmake.io/shget.text | bash
 

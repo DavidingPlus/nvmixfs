@@ -17,5 +17,7 @@ struct dentry *nvmixMount(struct file_system_type *, int, const char *, void *);
 
 void nvmixKillSb(struct super_block *);
 
+int nvmixFillSuper(struct super_block *, void *, int);
+
 
 #endif

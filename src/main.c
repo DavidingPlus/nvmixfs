@@ -21,7 +21,7 @@ MODULE_DESCRIPTION("A Simple FileSystem");
 extern struct file_system_type nvmixFileSystemType;
 
 
-static int __init nvmixfs_init(void)
+static int __init nvmixInit(void)
 {
     int res = register_filesystem(&nvmixFileSystemType);
     if (0 != res)
@@ -39,7 +39,7 @@ ERR:
     return res;
 }
 
-static void __exit nvmixfs_exit(void)
+static void __exit nvmixExit(void)
 {
     int res = unregister_filesystem(&nvmixFileSystemType);
     if (0 != res)
@@ -54,5 +54,5 @@ static void __exit nvmixfs_exit(void)
 }
 
 
-module_init(nvmixfs_init);
-module_exit(nvmixfs_exit);
+module_init(nvmixInit);
+module_exit(nvmixExit);

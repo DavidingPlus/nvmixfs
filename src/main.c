@@ -18,13 +18,39 @@ MODULE_AUTHOR("DavidingPlus");
 MODULE_DESCRIPTION("A Simple FileSystem");
 
 
+extern struct file_system_type nvmixFileSystemType;
+
+
 static int __init nvmixfs_init(void)
 {
-    return 0;
+    int res = register_filesystem(&nvmixFileSystemType);
+    if (0 != res)
+    {
+        pr_err("nvmixfs: failed to register nvmixfs.\n");
+
+
+        goto ERR;
+    }
+
+    pr_info("nvmisfs: nvmixfs module loaded.\n");
+
+
+ERR:
+    return res;
 }
 
 static void __exit nvmixfs_exit(void)
 {
+    int res = unregister_filesystem(&nvmixFileSystemType);
+    if (0 != res)
+    {
+        pr_err("nvmixfs: failed to unregister nvmixfs.\n");
+
+
+        return;
+    }
+
+    pr_info("nvmisfs: nvmixfs module unloaded.\n");
 }
 
 

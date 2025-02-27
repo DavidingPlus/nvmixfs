@@ -10,7 +10,7 @@
 #include "dir.h"
 
 
-struct file_operations nvmixDirOperations = {
+struct file_operations nvmixDirOps = {
     .owner = THIS_MODULE,
     .read = generic_read_dir,
     // iterate 是独占式遍历，持有目录的 inode 互斥锁，确保遍历期间目录结构不会被修改。

@@ -18,7 +18,7 @@ struct file_system_type nvmixFileSystemType = {
     .name = "nvmixfs",
     .mount = nvmixMount,
     .kill_sb = nvmixKillSb,
-    .fs_flags = FS_REQUIRES_DEV,
+    .fs_flags = FS_REQUIRES_DEV, // 需要一个块设备，本系统是基于块设备的文件系统。
     .next = NULL,
 };
 

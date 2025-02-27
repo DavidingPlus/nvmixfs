@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief 文件系统内核模块主程序入口文件。
+ * @brief nvmixfs 内核模块主程序入口文件。
  *
  * Copyright (c) 2024 电子科技大学 刘治学
  *

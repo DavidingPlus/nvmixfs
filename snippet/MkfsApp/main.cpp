@@ -11,10 +11,10 @@ int main(int argc, char **argv)
 {
     FILE *file;
     char buffer[NVMIX_BLOCK_SIZE];
-    struct nvmixSuperBlock msb;
-    struct nvmixInode rootInode;
-    struct nvmixInode fileInode;
-    struct nvmixDirEntry fileDentry;
+    struct NvmixSuperBlock msb;
+    struct NvmixInodeInfo rootInode;
+    struct NvmixInodeInfo fileInode;
+    struct NvmixDirEntry fileDentry;
     int i;
 
     if (argc != 2)
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    memset(&msb, 0, sizeof(struct nvmixSuperBlock));
+    memset(&msb, 0, sizeof(struct NvmixSuperBlock));
 
     msb.magic = NVMIX_MAGIC;
     msb.version = 1;

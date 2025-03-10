@@ -25,11 +25,11 @@ static int __init nvmixInit(void)
 {
     int res = 0;
 
+
     res = register_filesystem(&nvmixFileSystemType);
     if (0 != res)
     {
         pr_err("nvmixfs: failed to register nvmixfs.\n");
-
 
         goto ERR;
     }
@@ -44,6 +44,7 @@ ERR:
 static void __exit nvmixExit(void)
 {
     int res = 0;
+
 
     res = unregister_filesystem(&nvmixFileSystemType);
     if (0 != res)

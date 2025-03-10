@@ -17,17 +17,5 @@ struct dentry *nvmixLookup(struct inode *, struct dentry *, unsigned int);
 
 int nvmixCreate(struct inode *, struct dentry *, umode_t, bool);
 
-int nvmixUnlink(struct inode *, struct dentry *);
-
-int nvmixMkdir(struct inode *, struct dentry *, umode_t);
-
-int nvmixRmdir(struct inode *, struct dentry *);
-
-int nvmixRename(struct inode *, struct dentry *, struct inode *, struct dentry *, unsigned int);
-
-int nvmixLink(struct dentry *, struct inode *, struct dentry *);
-
-int nvmixSymlink(struct inode *, struct dentry *, const char *);
-
 
 #endif

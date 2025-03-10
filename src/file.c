@@ -9,35 +9,15 @@
 
 #include "file.h"
 
+#include <linux/fs.h>
+
 
 struct file_operations nvmixFileOps = {
     .owner = THIS_MODULE,
-    .open = nvmixOpen,
-    // 新内核优先使用 read_iter 和 write_iter，支持异步并且更高效。这里先暂时使用老的 read 和 write。后续依据需求看是否迁移。
-    .read = nvmixRead,
-    .write = nvmixWrite,
+    .open = generic_file_open,
+    // 新内核优先使用 read_iter 和 write_iter 替代 read 和 write，支持异步并且更高效。
+    .read_iter = generic_file_read_iter,
+    .write_iter = generic_file_write_iter,
+    .mmap = generic_file_mmap,
     .llseek = generic_file_llseek,
-    .fsync = generic_file_fsync,
 };
-
-
-int nvmixOpen(struct inode *pInode, struct file *pFile)
-{
-    // TODO
-
-    return 0;
-}
-
-ssize_t nvmixRead(struct file *pFile, char __user *pBuf, size_t len, loff_t *pPos)
-{
-    // TODO
-
-    return (ssize_t)0;
-}
-
-ssize_t nvmixWrite(struct file *pFile, const char __user *pBuf, size_t len, loff_t *pPos)
-{
-    // TODO
-
-    return (ssize_t)0;
-}

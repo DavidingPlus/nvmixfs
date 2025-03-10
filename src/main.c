@@ -23,7 +23,9 @@ extern struct file_system_type nvmixFileSystemType;
 
 static int __init nvmixInit(void)
 {
-    int res = register_filesystem(&nvmixFileSystemType);
+    int res = 0;
+
+    res = register_filesystem(&nvmixFileSystemType);
     if (0 != res)
     {
         pr_err("nvmixfs: failed to register nvmixfs.\n");
@@ -41,7 +43,9 @@ ERR:
 
 static void __exit nvmixExit(void)
 {
-    int res = unregister_filesystem(&nvmixFileSystemType);
+    int res = 0;
+
+    res = unregister_filesystem(&nvmixFileSystemType);
     if (0 != res)
     {
         pr_err("nvmixfs: failed to unregister nvmixfs.\n");

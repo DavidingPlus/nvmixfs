@@ -19,7 +19,6 @@ struct file_system_type nvmixFileSystemType = {
     .mount = nvmixMount,
     .kill_sb = nvmixKillSb,
     .fs_flags = FS_REQUIRES_DEV, // 表示本系统是基于块设备的文件系统。
-    .next = NULL,
 };
 
 
@@ -32,7 +31,14 @@ struct dentry *nvmixMount(struct file_system_type *pFileSystemType, int flags, c
     struct dentry *res = mount_bdev(pFileSystemType, flags, pDevName, pData, nvmixFillSuper);
 
     // 使用 IS_ERR() 函数检测是否为错误指针。
-    IS_ERR(res) ? pr_err("nvmixfs: failed to mount %s.\n", pDevName) : pr_info("nvmixfs: mounted %s successfully.\n", pDevName);
+    if (IS_ERR(res))
+    {
+        pr_err("nvmixfs: failed to mount %s.\n", pDevName);
+    }
+    else
+    {
+        pr_info("nvmixfs: mounted %s successfully.\n", pDevName);
+    }
 
 
     return res;

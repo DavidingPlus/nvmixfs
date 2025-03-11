@@ -23,7 +23,7 @@ struct inode_operations nvmixFileInodeOps = {
     .getattr = simple_getattr,
 };
 
-// 打开的文件 file 的操作接口。
+// 由进程打开的文件（用 file 结构描述）的操作接口。
 extern struct file_operations nvmixFileOps;
 
 

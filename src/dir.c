@@ -10,6 +10,7 @@
 #include "dir.h"
 
 #include "defs.h"
+#include "inode.h"
 
 #include <linux/kernel.h>
 #include <linux/buffer_head.h>

@@ -27,6 +27,12 @@ struct inode_operations nvmixFileInodeOps = {
 extern struct file_operations nvmixFileOps;
 
 
+// 静态函数只能被当前源文件使用，类似于 C++ 类中的私有成员函数。不建议声明在头文件中，因为头文件可能被其他文件包含，可能会出现未知问题，同时可能也会降低链接速度。
+static inline struct inode *nvmixNewInode(struct inode *);
+
+static inline int nvmixAddLink(struct dentry *, struct inode *);
+
+
 struct dentry *nvmixLookup(struct inode *pDir, struct dentry *pDentry, unsigned int flags)
 {
     // TODO

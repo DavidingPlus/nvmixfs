@@ -13,14 +13,17 @@
 #include <linux/fs.h>
 
 
+struct NvmixInodeInfo
+{
+    struct inode m_vfsInode;
+
+    unsigned long m_dataBlock;
+};
+
+
 struct dentry *nvmixLookup(struct inode *, struct dentry *, unsigned int);
 
 int nvmixCreate(struct inode *, struct dentry *, umode_t, bool);
-
-
-static struct inode *nvmixNewInode(struct inode *);
-
-static int nvmixAddLink(struct dentry *, struct inode *);
 
 
 #endif

@@ -7,19 +7,20 @@
 #include "defs.h"
 
 
-int main(int argc, char **argv)
+int main(int argc, char const *argv[])
 {
     FILE *file;
     char buffer[NVMIX_BLOCK_SIZE];
     struct NvmixSuperBlock msb;
-    struct NvmixInodeInfo rootInode;
-    struct NvmixInodeInfo fileInode;
+    struct NvmixInode rootInode;
+    struct NvmixInode fileInode;
     struct NvmixDirEntry fileDentry;
     int i;
 
-    if (argc != 2)
+    if (2 != argc)
     {
-        fprintf(stderr, "Usage: %s block_device_name\n", argv[0]);
+        std::cerr << "Usage: " << argv[0] << " block_device_name\n";
+
         exit(EXIT_FAILURE);
     }
 
@@ -27,6 +28,7 @@ int main(int argc, char **argv)
     if (file == NULL)
     {
         perror("fopen");
+
         exit(EXIT_FAILURE);
     }
 
@@ -38,8 +40,7 @@ int main(int argc, char **argv)
 
     /* zero disk  */
     memset(buffer, 0, NVMIX_BLOCK_SIZE);
-    for (i = 0; i < 128; i++)
-        fwrite(buffer, 1, NVMIX_BLOCK_SIZE, file);
+    for (i = 0; i < 128; i++) fwrite(buffer, 1, NVMIX_BLOCK_SIZE, file);
 
     fseek(file, 0, SEEK_SET);
 

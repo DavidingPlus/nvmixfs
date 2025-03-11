@@ -23,16 +23,22 @@ jobs:
 
           apt install curl build-essential -y
 
+          apt install linux-headers-$(uname -r) -y
+
           curl -fsSL https://xmake.io/shget.text | bash
 
       - name: Configure XMake
         working-directory: ${{github.workspace}}
         run: |
 
-          xmake f --linux-headers=/usr/src/linux-headers-${shell uname -r}/
+          alias xmake=~/.local/bin/xmake
+
+          xmake --root f -m release --linux-headers=/usr/src/linux-headers-$(uname -r)/
       
       - name: Build Targets
         working-directory: ${{github.workspace}}
         run: |
 
-          xmake
+          alias xmake=~/.local/bin/xmake
+
+          xmake --root build

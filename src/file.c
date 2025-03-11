@@ -12,6 +12,7 @@
 #include <linux/fs.h>
 
 
+// 打开的文件 file 的操作接口。
 struct file_operations nvmixFileOps = {
     .owner = THIS_MODULE,
     .open = generic_file_open,

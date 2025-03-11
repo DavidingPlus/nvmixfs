@@ -14,7 +14,7 @@ jobs:
     container:
       image: ubuntu:20.04
     env:
-      KERNEL_VERSION: "5.4.0-198-generic"
+      KERNEL_VERSION: "5.4.0-208-generic"
 
     steps:
       - uses: actions/checkout@v4
@@ -28,13 +28,24 @@ jobs:
 
           apt install linux-headers-${KERNEL_VERSION} -y
 
+      - name: Install XMake
+        run: |
+
           curl -fsSL https://xmake.io/shget.text | bash
+
+          # use xmake as root
+          alias xmake="~/.local/bin/xmake"
+          export XMAKE_ROOT=y
+
+          # keep xmake up to date
+          xmake update -s dev
 
       - name: Configure XMake
         working-directory: ${{github.workspace}}
         run: |
 
-          alias xmake="~/.local/bin/xmake --root"
+          alias xmake="~/.local/bin/xmake"
+          export XMAKE_ROOT=y
 
           xmake f -m release --linux-headers=/usr/src/linux-headers-${KERNEL_VERSION}/
       
@@ -42,6 +53,7 @@ jobs:
         working-directory: ${{github.workspace}}
         run: |
 
-          alias xmake="~/.local/bin/xmake --root"
+          alias xmake="~/.local/bin/xmake"
+          export XMAKE_ROOT=y
 
           xmake build

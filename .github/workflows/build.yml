@@ -34,7 +34,7 @@ jobs:
         working-directory: ${{github.workspace}}
         run: |
 
-          alias xmake=~/.local/bin/xmake --root
+          alias xmake="~/.local/bin/xmake --root"
 
           xmake f -m release --linux-headers=/usr/src/linux-headers-${KERNEL_VERSION}/
       
@@ -42,6 +42,6 @@ jobs:
         working-directory: ${{github.workspace}}
         run: |
 
-          alias xmake=~/.local/bin/xmake --root
+          alias xmake="~/.local/bin/xmake --root"
 
           xmake build

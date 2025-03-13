@@ -13,7 +13,7 @@
 
 
 // 由进程打开的文件（用 file 结构描述）的操作接口。
-const struct file_operations nvmixFileOps = {
+struct file_operations nvmixFileOps = {
     .owner = THIS_MODULE,
     .open = generic_file_open,
     // 新内核优先使用 read_iter 和 write_iter 替代 read 和 write，支持异步并且更高效。

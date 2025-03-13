@@ -12,7 +12,7 @@
 #include <linux/fs.h>
 
 
-const struct address_space_operations nvmixAops = {
+struct address_space_operations nvmixAops = {
     .readpage = simple_readpage,
     .write_begin = simple_write_begin,
     .write_end = simple_write_end,

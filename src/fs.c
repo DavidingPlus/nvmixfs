@@ -17,7 +17,7 @@
 #include <linux/slab.h>
 
 
-const struct file_system_type nvmixFileSystemType = {
+struct file_system_type nvmixFileSystemType = {
     .owner = THIS_MODULE,
     .name = "nvmixfs",
     .mount = nvmixMount,
@@ -25,7 +25,7 @@ const struct file_system_type nvmixFileSystemType = {
     .fs_flags = FS_REQUIRES_DEV, // 表示本系统是基于块设备的文件系统。
 };
 
-const struct super_operations nvmixSuperOps = {
+struct super_operations nvmixSuperOps = {
     .statfs = simple_statfs,
     // put_super 的作用是在文件系统卸载或不再需要超级块时，释放与该超级块关联的资源。
     .put_super = nvmixPutSuper,

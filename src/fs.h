@@ -34,5 +34,13 @@ void nvmixKillSb(struct super_block *);
 
 int nvmixFillSuper(struct super_block *, void *, int);
 
+void nvmixPutSuper(struct super_block *);
+
+struct inode *nvmixAllocInode(struct super_block *);
+
+void nvmixDestroyInode(struct inode *);
+
+int nvmixWriteInode(struct inode *, struct writeback_control *);
+
 
 #endif

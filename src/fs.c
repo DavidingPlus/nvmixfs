@@ -21,6 +21,14 @@ struct file_system_type nvmixFileSystemType = {
     .fs_flags = FS_REQUIRES_DEV, // 表示本系统是基于块设备的文件系统。
 };
 
+struct super_operations nvmixSuperOps = {
+    .statfs = simple_statfs,
+    .put_super = nvmixPutSuper,
+    .alloc_inode = nvmixAllocInode,
+    .destroy_inode = nvmixDestroyInode,
+    .write_inode = nvmixWriteInode,
+};
+
 
 struct dentry *nvmixMount(struct file_system_type *pFileSystemType, int flags, const char *pDevName, void *pData)
 {
@@ -55,6 +63,34 @@ void nvmixKillSb(struct super_block *pSuperBlock)
 }
 
 int nvmixFillSuper(struct super_block *pSuperBlock, void *pData, int silent)
+{
+    // TODO
+
+    return 0;
+}
+
+void nvmixPutSuper(struct super_block *pSb)
+{
+    // TODO
+
+    return;
+}
+
+struct inode *nvmixAllocInode(struct super_block *pSb)
+{
+    // TODO
+
+    return (struct inode *)NULL;
+}
+
+void nvmixDestroyInode(struct inode *pInode)
+{
+    // TODO
+
+    return;
+}
+
+int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
 {
     // TODO
 

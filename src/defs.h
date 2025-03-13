@@ -19,7 +19,7 @@
  *    ^	    ^ (1 block)
  *    |     |
  *    +-0   +-- 4096
- * @brief 目前本文件系统设计的非常简单，数据块以 4 KIB 为单位。第一个块存储超级块，第二个块是 inode 区。由于目前限制了目录项的数量，4 KIB 是够用的。因此数据块从块号 2 开始。这也是经典的三段式布局。
+ * @brief 目前本文件系统设计的非常简单，数据块以 4 KIB 为单位。第一个块存储超级块，第二个块是 inode 区。由于目前限制了文件系统总 inode 的数量为 32，4 KIB 是够用的。因此数据块从块号 2 开始。这是经典的三段式布局。
  * @details 此文件定义了文件系统中必要的元数据。由于此文件 defs.h 需要被用户层程序 MkfsApp 引用，此文件中不能放置内核独有的数据结构，例如 struct inode、struct file 等，这些数据结构放到其他位置。
  */
 
@@ -29,7 +29,14 @@
 #define NVMIX_BLOCK_SIZE 4096
 
 /**
+ * @brief 文件系统最多的 inode 数量。
+ * @todo 目前先设置为 32，后续增加并修正设计和设计。
+ */
+#define NVMIX_MAX_INODE_NUM 32
+
+/**
  * @brief 目录下最多包含的目录项数量。
+ * @details 注意，此项与 NVMIX_MAX_INODE_NUM 并不是一个东西。NVMIX_MAX_INODE_NUM 是文件系统总 inode 的数量，NVMIX_MAX_ENTRY_NUM 是一个目录下最多包含的目录项数量。NVMIX_MAX_ENTRY_NUM 应小于等于 NVMIX_MAX_INODE_NUM。
  */
 #define NVMIX_MAX_ENTRY_NUM 32
 

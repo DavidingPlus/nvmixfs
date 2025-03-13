@@ -11,6 +11,21 @@
 #define _NVMIX_FS_H_
 
 #include <linux/fs.h>
+#include <linux/buffer_head.h>
+
+
+struct NvmixSuperBlockInfo
+{
+    struct buffer_head *m_pBh;
+
+    /**
+     * @brief 管理 inode 分配状态的位图信息。
+     * @details unsigned long 类型 32 位，与 NVMIX_MAX_INODE_NUM（32）刚好对应。每一位代表一个 inode 的分配信息。
+     */
+    unsigned long m_imap;
+
+    unsigned char m_version;
+};
 
 
 struct dentry *nvmixMount(struct file_system_type *, int, const char *, void *);

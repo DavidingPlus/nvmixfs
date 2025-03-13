@@ -10,6 +10,9 @@
 #include "inode.h"
 
 #include "defs.h"
+#include "fs.h"
+
+#include <linux/cred.h>
 
 
 // 目录 inode 的操作接口。
@@ -92,9 +95,41 @@ ERR:
 // 此函数的语义是在传入目录下创建新 inode。参数 struct inode* pDir 代表一个目录，返回的 inode 在当前 create() 语义下是一个文件。创建目录有函数 mkdir()。
 struct inode *nvmixNewInode(struct inode *pDir)
 {
-    // TODO
+    struct super_block *pSb = pDir->i_sb;
+    // s_fs_info 类似于 file 结构的 private_data，是文件系统中可被我们自己定义的私有数据信息。s_fs_info 在 fill_super 的时候就被初始化，这里拿到该部分数据以推进后续代码。
+    struct NvmixSuperBlockInfo *pNsbi = (struct NvmixSuperBlockInfo *)pSb->s_fs_info;
+    struct inode *pInode = NULL;
+    unsigned long index = 0;
 
-    return (struct inode *)NULL;
+    // find_first_zero_bit() 是内核提供的一个位图操作函数，其作用是从给定的位图中查找第一个值为 0 的位，即未使用的空闲资源。m_imap 是我们自己定义的管理 inode 分配状态的位图信息，类型是 unsigned long，刚好 4 个字节，32 位。每一位用于标识分配状态。
+    index = find_first_zero_bit(&pNsbi->m_imap, NVMIX_MAX_INODE_NUM);
+    if (NVMIX_MAX_INODE_NUM == index)
+    {
+        pr_err("nvmixfs: no space left in imap.\n");
+
+        goto ERR;
+    }
+
+    // 原子性地测试并设置位图中的目标位，维护 m_imap 状态。
+    test_and_set_bit(index, &pNsbi->m_imap);
+    // 标记缓冲区为脏，表示内容已被修改，需要写回磁盘。
+    mark_buffer_dirty(pNsbi->m_pBh);
+
+    pInode = new_inode(pSb);                // 此函数创建新的 inode 结构，并关联到文件系统的超级块。
+    pInode->i_uid = current_fsuid();        // 用户所有者 ID。
+    pInode->i_gid = current_fsgid();        // 组所有者 ID。
+    pInode->i_ino = index;                  // inode 编号。
+    pInode->i_mtime = current_time(pInode); // 修改时间 Modification Time，作用对象是文件内容。
+    pInode->i_atime = current_time(pInode); // 访问时间 Access Time，作用对象是文件内容。
+    pInode->i_ctime = current_time(pInode); // 变更时间 Change Time，作用对象是 inode 元数据。
+    pInode->i_blocks = 0;                   // 初始化 inode 的数据块占用数。
+
+    // 将新创建的 inode 插入到内核维护的全局 inode 哈希表。
+    insert_inode_hash(pInode);
+
+
+ERR:
+    return pInode;
 }
 
 int nvmixAddLink(struct dentry *pDentry, struct inode *pInode)

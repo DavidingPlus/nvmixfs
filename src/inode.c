@@ -64,8 +64,8 @@ int nvmixCreate(struct inode *pDir, struct dentry *pDentry, umode_t mode, bool e
     pInode->i_op = &nvmixFileInodeOps;
     pInode->i_fop = &nvmixFileOps;
 
-    pNii = container_of(pInode, struct NvmixInodeInfo, m_vfsInode);
-    pNii->m_dataBlock = NVMIX_FIRST_DATA_BLOCK + pInode->i_ino;
+    pNii = NVMIX_I(pInode);
+    pNii->m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + pInode->i_ino;
 
     // 将新 inode 关联到父目录的目录项 dentry 中，会维护并修改父目录项的一些信息。与下面的 d_instantiate() 作用不同，注意区分。
     res = nvmixAddLink(pDentry, pInode);

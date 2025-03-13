@@ -122,7 +122,7 @@ void nvmixDestroyInode(struct inode *pInode)
     // kfree() 是内核用于释放动态分配内存的函数。释放由 kmalloc()、kzalloc()、kmem_cache_alloc() 等内核内存分配函数申请的内存。
     // kzfree() 的区别是先清 0 再释放内存，避免敏感内存内容的残留。
     // 当前版本内核为 5.4，5.15 中 kzfree() 接口已废弃，转而使用 kfree_sensitive()。
-    kzfree(container_of(pInode, struct NvmixInodeInfo, m_vfsInode));
+    kzfree(NVMIX_I(pInode));
 
     pr_info("nvmixfs: destroyed inode successfully.\n");
 }

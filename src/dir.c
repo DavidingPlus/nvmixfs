@@ -41,13 +41,11 @@ int nvmixReaddir(struct file *pDir, struct dir_context *pCtx)
 
 
     pInode = pDir->f_inode;
-    // container_of() 宏通过结构体的某个成员变量的地址，反向找到整个结构体的起始地址。
-    // 注意因为是成员的地址，所以 NvmixInodeInfo 中存储的是 struct inode 而非指针，这样才能编译通过。
-    pNii = container_of(pInode, struct NvmixInodeInfo, m_vfsInode);
+    pNii = NVMIX_I(pInode);
 
     pSb = pInode->i_sb;
-    // sb_bread() 用于从磁盘读取指定块的数据到内存缓冲区，第一个参数是超级块号，第二个参数是要读取的逻辑块号。
-    pBh = sb_bread(pSb, pNii->m_dataBlock);
+    // sb_bread() 用于从磁盘读取指定块的数据到内存缓冲区，第一个参数是超级块指针，第二个参数是要读取的逻辑块号。
+    pBh = sb_bread(pSb, pNii->m_dataBlockIndex);
     if (!pBh)
     {
         pr_err("nvmixfs: could not read block.\n");

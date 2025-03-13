@@ -53,9 +53,9 @@ int main(int argc, char const *argv[])
     rootInode.gid = 0;
     rootInode.mode = S_IFDIR | 0755;
     rootInode.size = 0;
-    rootInode.data_block = NVMIX_FIRST_DATA_BLOCK;
+    rootInode.data_block = NVMIX_FIRST_DATA_BLOCK_INDEX;
 
-    fseek(file, NVMIX_INODE_BLOCK * NVMIX_BLOCK_SIZE, SEEK_SET);
+    fseek(file, NVMIX_INODE_BLOCK_INDEX * NVMIX_BLOCK_SIZE, SEEK_SET);
     fwrite(&rootInode, sizeof(rootInode), 1, file);
 
     /* initialize new inode */
@@ -64,14 +64,14 @@ int main(int argc, char const *argv[])
     fileInode.gid = 0;
     fileInode.mode = S_IFREG | 0644;
     fileInode.size = 0;
-    fileInode.data_block = NVMIX_FIRST_DATA_BLOCK + 1;
+    fileInode.data_block = NVMIX_FIRST_DATA_BLOCK_INDEX + 1;
     fwrite(&fileInode, sizeof(fileInode), 1, file);
 
     /* add dentry information */
     memset(&fileDentry, 0, sizeof(fileDentry));
     fileDentry.ino = 1;
     memcpy(fileDentry.name, "a.txt", 5);
-    fseek(file, NVMIX_FIRST_DATA_BLOCK * NVMIX_BLOCK_SIZE, SEEK_SET);
+    fseek(file, NVMIX_FIRST_DATA_BLOCK_INDEX * NVMIX_BLOCK_SIZE, SEEK_SET);
     fwrite(&fileDentry, sizeof(fileDentry), 1, file);
 
     fclose(file);

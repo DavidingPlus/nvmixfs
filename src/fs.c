@@ -96,17 +96,35 @@ void nvmixPutSuper(struct super_block *pSb)
 
 struct inode *nvmixAllocInode(struct super_block *pSb)
 {
-    // TODO
+    struct NvmixInodeInfo *pNii = NULL;
 
-    return (struct inode *)NULL;
+    // kzalloc() 与 kmalloc() 的区别在于 kzalloc() 会把动态开辟的内存的内容置 0。
+    pNii = kzalloc(sizeof(struct NvmixInodeInfo), GFP_KERNEL);
+    if (!pNii)
+    {
+        pr_err("nvmixfs: failed to allocate inode.\n");
+
+
+        return NULL;
+    }
+
+    // inode_init_once() 是内核中与 inode 对象初始化相关的函数，通常与 Slab 分配器配合使用。核心作用是为新分配的 inode 对象设置初始状态，确保其关键字段（如锁、链表、引用计数等）在首次使用时处于合法状态。
+    inode_init_once(&pNii->m_vfsInode);
+
+    pr_info("nvmixfs: allocated inode successfully.\n");
+
+
+    return &pNii->m_vfsInode;
 }
 
 void nvmixDestroyInode(struct inode *pInode)
 {
     // kfree() 是内核用于释放动态分配内存的函数。释放由 kmalloc()、kzalloc()、kmem_cache_alloc() 等内核内存分配函数申请的内存。
-    kfree(container_of(pInode, struct NvmixInodeInfo, m_vfsInode));
+    // kzfree() 的区别是先清 0 再释放内存，避免敏感内存内容的残留。
+    // 当前版本内核为 5.4，5.15 中 kzfree() 接口已废弃，转而使用 kfree_sensitive()。
+    kzfree(container_of(pInode, struct NvmixInodeInfo, m_vfsInode));
 
-    pr_info("nvmixfs: destroyed given inode successfully.\n");
+    pr_info("nvmixfs: destroyed inode successfully.\n");
 }
 
 int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)

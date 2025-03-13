@@ -16,13 +16,13 @@
 
 
 // 目录 inode 的操作接口。
-struct inode_operations nvmixDirInodeOps = {
+const struct inode_operations nvmixDirInodeOps = {
     .lookup = nvmixLookup,
     .create = nvmixCreate,
 };
 
 // 文件 inode 的操作接口。
-struct inode_operations nvmixFileInodeOps = {
+const struct inode_operations nvmixFileInodeOps = {
     .getattr = simple_getattr,
 };
 

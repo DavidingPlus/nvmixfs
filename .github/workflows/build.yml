@@ -4,13 +4,12 @@ on:
   push:
     branches:
       - master
-      - feature-liuzx-ci
   workflow_dispatch:
 
+# see more at https://github.com/DavidingPlus/nvmixfs/issues/1
 jobs:
   build:
     runs-on: ubuntu-latest
-    # 此 ubuntu:20.04 的 Docker 是最精简的容器，只支持基本功能，并不具有自己的内核，而是和宿主机共享。因此在 Docker 中 uname -r 会输出宿主机的内核版本，仍然没有解决问题。因此 Docker 这条路只能保证编译走通而无法测试，和在宿主机中的结果相同。但 Docker 机器能找到版本 5 的内核头文件，宿主机不行，基于此原因暂时使用 Docker。
     container:
       image: ubuntu:20.04
     env:

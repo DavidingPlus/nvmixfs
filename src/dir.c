@@ -60,7 +60,7 @@ int nvmixReaddir(struct file *pDir, struct dir_context *pCtx)
     for (; pCtx->pos <= NVMIX_MAX_ENTRY_NUM; ++pCtx->pos)
     {
         // 每个目录项的元数据是我自己定义的 NvmixDirEntry 类型。
-        pNde = (struct NvmixDirEntry *)pBh->b_data + pCtx->pos;
+        pNde = (struct NvmixDirEntry *)(pBh->b_data) + pCtx->pos;
 
         // inode 为 0 无效条目，需跳过。
         if (0 == pNde->m_ino) continue;
@@ -77,7 +77,9 @@ int nvmixReaddir(struct file *pDir, struct dir_context *pCtx)
         }
     }
 
+    // 释放缓冲区头。
     brelse(pBh);
+    pBh = NULL;
 
 
 ERR:

@@ -9,8 +9,12 @@
 
 #include "fs.h"
 
+#include "inode.h"
+
 #include <linux/fs.h>
 #include <linux/export.h>
+#include <linux/buffer_head.h>
+#include <linux/slab.h>
 
 
 const struct file_system_type nvmixFileSystemType = {
@@ -23,6 +27,7 @@ const struct file_system_type nvmixFileSystemType = {
 
 const struct super_operations nvmixSuperOps = {
     .statfs = simple_statfs,
+    // put_super 的作用是在文件系统卸载或不再需要超级块时，释放与该超级块关联的资源。
     .put_super = nvmixPutSuper,
     .alloc_inode = nvmixAllocInode,
     .destroy_inode = nvmixDestroyInode,
@@ -32,11 +37,14 @@ const struct super_operations nvmixSuperOps = {
 
 struct dentry *nvmixMount(struct file_system_type *pFileSystemType, int flags, const char *pDevName, void *pData)
 {
+    struct dentry *res = NULL;
+
+
     // mount_bdev()：挂载存储在块设备上的文件系统。
     // mount_single()：挂载在所有挂载操作之间共享实例的文件系统。
     // mount_nodev()：挂载不在物理设备上的文件系统。
     // mount_pseudo()：用于伪文件系统的辅助函数（如 sockfs, pipefs 等无法被挂载的文件系统）。
-    struct dentry *res = mount_bdev(pFileSystemType, flags, pDevName, pData, nvmixFillSuper);
+    res = mount_bdev(pFileSystemType, flags, pDevName, pData, nvmixFillSuper);
 
     // 使用 IS_ERR() 函数检测是否为错误指针。
     if (IS_ERR(res))
@@ -71,9 +79,19 @@ int nvmixFillSuper(struct super_block *pSuperBlock, void *pData, int silent)
 
 void nvmixPutSuper(struct super_block *pSb)
 {
-    // TODO
+    struct NvmixSuperBlockInfo *pNsbi = NULL;
 
-    return;
+
+    // s_fs_info 类似于 file 结构的 private_data，是文件系统中可被我们自己定义的私有数据信息。s_fs_info 在 fill_super 时会被初始化。这里拿到该部分数据以推进后续代码。
+    pNsbi = (struct NvmixSuperBlockInfo *)(pSb->s_fs_info);
+
+    // 标记缓冲区为脏，表示内容已被修改，需要写回磁盘。
+    mark_buffer_dirty(pNsbi->m_pBh);
+    // 释放缓冲区头。
+    brelse(pNsbi->m_pBh);
+    pNsbi->m_pBh = NULL;
+
+    pr_info("nvmixfs: released super block resources.\n");
 }
 
 struct inode *nvmixAllocInode(struct super_block *pSb)
@@ -85,9 +103,10 @@ struct inode *nvmixAllocInode(struct super_block *pSb)
 
 void nvmixDestroyInode(struct inode *pInode)
 {
-    // TODO
+    // kfree() 是内核用于释放动态分配内存的函数。释放由 kmalloc()、kzalloc()、kmem_cache_alloc() 等内核内存分配函数申请的内存。
+    kfree(container_of(pInode, struct NvmixInodeInfo, m_vfsInode));
 
-    return;
+    pr_info("nvmixfs: destroyed given inode successfully.\n");
 }
 
 int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)

@@ -95,11 +95,14 @@ ERR:
 // 此函数的语义是在传入目录下创建新 inode。参数 struct inode* pDir 代表一个目录，返回的 inode 在当前 create() 语义下是一个文件。创建目录有函数 mkdir()。
 struct inode *nvmixNewInode(struct inode *pDir)
 {
-    struct super_block *pSb = pDir->i_sb;
-    // s_fs_info 类似于 file 结构的 private_data，是文件系统中可被我们自己定义的私有数据信息。s_fs_info 在 fill_super 的时候就被初始化，这里拿到该部分数据以推进后续代码。
-    struct NvmixSuperBlockInfo *pNsbi = (struct NvmixSuperBlockInfo *)pSb->s_fs_info;
+    struct super_block *pSb = NULL;
+    struct NvmixSuperBlockInfo *pNsbi = NULL;
     struct inode *pInode = NULL;
     unsigned long index = 0;
+
+
+    pSb = pDir->i_sb;
+    pNsbi = (struct NvmixSuperBlockInfo *)(pSb->s_fs_info); // 含义解释见 fs.c。
 
     // find_first_zero_bit() 是内核提供的一个位图操作函数，其作用是从给定的位图中查找第一个值为 0 的位，即未使用的空闲资源。m_imap 是我们自己定义的管理 inode 分配状态的位图信息，类型是 unsigned long，刚好 4 个字节，32 位。每一位用于标识分配状态。
     index = find_first_zero_bit(&pNsbi->m_imap, NVMIX_MAX_INODE_NUM);

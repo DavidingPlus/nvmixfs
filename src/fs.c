@@ -10,6 +10,7 @@
 #include "fs.h"
 
 #include "inode.h"
+#include "defs.h"
 
 #include <linux/fs.h>
 #include <linux/export.h>
@@ -129,7 +130,24 @@ void nvmixDestroyInode(struct inode *pInode)
 
 int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
 {
-    // TODO
+    struct super_block *pSb = NULL;
+    struct buffer_head *pBh = NULL;
+    int res = 0;
 
-    return 0;
+
+    pSb = pInode->i_sb;
+    pBh = sb_bread(pSb, NVMIX_INODE_BLOCK_INDEX);
+    if (!pBh)
+    {
+        pr_err("nvmixfs: could not read inode block.\n");
+
+        res = -ENOMEM;
+        goto ERR;
+    }
+
+    // TODO 获取 vfs inode 的信息，并填充本文件系统管理的 inode 元数据，然后将其写入磁盘。
+
+
+ERR:
+    return res;
 }

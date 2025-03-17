@@ -48,7 +48,7 @@ int nvmixReaddir(struct file *pDir, struct dir_context *pCtx)
     pBh = sb_bread(pSb, pNii->m_dataBlockIndex);
     if (!pBh)
     {
-        pr_err("nvmixfs: could not read block.\n");
+        pr_err("nvmixfs: could not read data block.\n");
 
         res = -ENOMEM;
         goto ERR;

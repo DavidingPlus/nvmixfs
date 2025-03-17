@@ -69,5 +69,10 @@ struct NvmixDirEntry
     unsigned long m_ino;
 };
 
+struct NvmixInode
+{
+    // TODO
+};
+
 
 #endif

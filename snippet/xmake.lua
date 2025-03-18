@@ -8,6 +8,8 @@ for _, dir in ipairs (dirs) do
 
     if os.isdir(dir) and os.isfile(xmakeFile) and os.isfile(buildmeFile) then
         -- Add subdirectory as a sub-project in xmake
+        set_targetdir ("$(buildir)/$(plat)/$(arch)/$(mode)/snippet")
+        
         includes (dir)
 
     end

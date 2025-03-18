@@ -27,8 +27,9 @@ struct NvmixInodeHelper
 
     /**
      * @brief inode 对应的数据块的逻辑块号。
+     * @detail 目前本文件系统最多 32 个 inode，即最多 32 个数据块，因此目前使用 unsigned short 类型。
      */
-    unsigned long m_dataBlockIndex;
+    unsigned short m_dataBlockIndex;
 };
 
 

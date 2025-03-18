@@ -65,13 +65,28 @@
 #define NVMIX_MAX_NAME_LENGTH 16
 
 
+/**
+ * @struct NvmixDentry
+ * @brief 目录项的元数据信息。
+ * @details 目录项指目录下的文件或子目录（包括 . 和 ..）。本结构类似 vfs 的 dentry 结构的作用，将 inode 和 目录项的名字关联在一起。
+ */
 struct NvmixDentry
 {
+    /**
+     * @brief 目录项的名字。
+     */
     char m_name[NVMIX_MAX_NAME_LENGTH];
 
+    /**
+     * @brief 目录项在 vfs 中全局唯一的 inode 号。
+     */
     unsigned long m_ino;
 };
 
+/**
+ * @struct NvmixInode
+ * @brief inode 的元数据信息。
+ */
 struct NvmixInode
 {
     unsigned int m_mode;
@@ -82,7 +97,7 @@ struct NvmixInode
 
     unsigned int m_size;
 
-    unsigned long m_dataBlockIndex;
+    unsigned short m_dataBlockIndex;
 };
 
 

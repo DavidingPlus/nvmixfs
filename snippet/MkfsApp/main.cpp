@@ -14,7 +14,7 @@ int main(int argc, char const *argv[])
     struct NvmixSuperBlock msb;
     struct NvmixInode rootInode;
     struct NvmixInode fileInode;
-    struct NvmixDirEntry fileDentry;
+    struct NvmixDentry fileDentry;
     int i;
 
     if (2 != argc)

@@ -14,7 +14,7 @@
 #include <linux/buffer_head.h>
 
 
-struct NvmixSuperBlockInfo
+struct NvmixSuperBlockHelper
 {
     struct buffer_head *m_pBh;
 

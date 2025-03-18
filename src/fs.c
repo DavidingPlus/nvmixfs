@@ -10,6 +10,7 @@
 #include "fs.h"
 
 #include "inode.h"
+#include "defs.h"
 
 #include <linux/fs.h>
 #include <linux/export.h>
@@ -79,28 +80,28 @@ int nvmixFillSuper(struct super_block *pSuperBlock, void *pData, int silent)
 
 void nvmixPutSuper(struct super_block *pSb)
 {
-    struct NvmixSuperBlockInfo *pNsbi = NULL;
+    struct NvmixSuperBlockHelper *pNsbh = NULL;
 
 
     // s_fs_info 类似于 file 结构的 private_data，是文件系统中可被我们自己定义的私有数据信息。s_fs_info 在 fill_super 时会被初始化。这里拿到该部分数据以推进后续代码。
-    pNsbi = (struct NvmixSuperBlockInfo *)(pSb->s_fs_info);
+    pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
 
     // 标记缓冲区为脏，表示内容已被修改，需要写回磁盘。
-    mark_buffer_dirty(pNsbi->m_pBh);
+    mark_buffer_dirty(pNsbh->m_pBh);
     // 释放缓冲区头。
-    brelse(pNsbi->m_pBh);
-    pNsbi->m_pBh = NULL;
+    brelse(pNsbh->m_pBh);
+    pNsbh->m_pBh = NULL;
 
     pr_info("nvmixfs: released super block resources.\n");
 }
 
 struct inode *nvmixAllocInode(struct super_block *pSb)
 {
-    struct NvmixInodeInfo *pNii = NULL;
+    struct NvmixInodeHelper *pNih = NULL;
 
     // kzalloc() 与 kmalloc() 的区别在于 kzalloc() 会把动态开辟的内存的内容置 0。
-    pNii = kzalloc(sizeof(struct NvmixInodeInfo), GFP_KERNEL);
-    if (!pNii)
+    pNih = kzalloc(sizeof(struct NvmixInodeHelper), GFP_KERNEL);
+    if (!pNih)
     {
         pr_err("nvmixfs: failed to allocate inode.\n");
 
@@ -109,12 +110,12 @@ struct inode *nvmixAllocInode(struct super_block *pSb)
     }
 
     // inode_init_once() 是内核中与 inode 对象初始化相关的函数，通常与 Slab 分配器配合使用。核心作用是为新分配的 inode 对象设置初始状态，确保其关键字段（如锁、链表、引用计数等）在首次使用时处于合法状态。
-    inode_init_once(&pNii->m_vfsInode);
+    inode_init_once(&pNih->m_vfsInode);
 
     pr_info("nvmixfs: allocated inode successfully.\n");
 
 
-    return &pNii->m_vfsInode;
+    return &pNih->m_vfsInode;
 }
 
 void nvmixDestroyInode(struct inode *pInode)
@@ -129,7 +130,45 @@ void nvmixDestroyInode(struct inode *pInode)
 
 int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
 {
-    // TODO
+    struct super_block *pSb = NULL;
+    struct buffer_head *pBh = NULL;
+    struct NvmixInode *pNi = NULL;
+    struct NvmixInodeHelper *pNih = NULL;
+    int res = 0;
 
-    return 0;
+
+    pSb = pInode->i_sb;
+    // 从 inode 区所在磁盘块读取数据。
+    pBh = sb_bread(pSb, NVMIX_INODE_BLOCK_INDEX);
+    if (!pBh)
+    {
+        pr_err("nvmixfs: could not read inode block.\n");
+
+        res = -ENOMEM;
+        goto ERR;
+    }
+
+    // inode 区存储的是 NvmixInode 数组，也需要偏移。获取地址的逻辑同 dir.c 中 nvmixReaddir()。
+    pNi = (struct NvmixInode *)(pBh->b_data) + pInode->i_ino;
+
+    pNi->m_mode = pInode->i_mode;
+    pNi->m_uid = i_uid_read(pInode);
+    pNi->m_gid = i_gid_read(pInode);
+    pNi->m_size = pInode->i_size;
+
+    pNih = NVMIX_I(pInode);
+    pNi->m_dataBlockIndex = pNih->m_dataBlockIndex;
+
+    pr_info("nvmixfs: m_mode is %05o; m_dataBlockIndex is %d.\n", pNi->m_mode, pNi->m_dataBlockIndex);
+
+    mark_buffer_dirty(pBh);
+
+    brelse(pBh);
+    pBh = NULL;
+
+    pr_info("nvmixfs: wrote inode %lu successfully.\n", pInode->i_ino);
+
+
+ERR:
+    return res;
 }

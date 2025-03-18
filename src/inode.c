@@ -47,8 +47,7 @@ int nvmixCreate(struct inode *pDir, struct dentry *pDentry, umode_t mode, bool e
 {
     int res = 0;
     struct inode *pInode = NULL;
-    // 创建新的 inode 时需要维护我们自己的 inode 元数据。
-    struct NvmixInodeInfo *pNii = NULL;
+    struct NvmixInodeHelper *pNih = NULL;
 
 
     pInode = nvmixNewInode(pDir);
@@ -64,8 +63,8 @@ int nvmixCreate(struct inode *pDir, struct dentry *pDentry, umode_t mode, bool e
     pInode->i_op = &nvmixFileInodeOps;
     pInode->i_fop = &nvmixFileOps;
 
-    pNii = NVMIX_I(pInode);
-    pNii->m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + pInode->i_ino;
+    pNih = NVMIX_I(pInode);
+    pNih->m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + pInode->i_ino;
 
     // 将新 inode 关联到父目录的目录项 dentry 中，会维护并修改父目录项的一些信息。与下面的 d_instantiate() 作用不同，注意区分。
     res = nvmixAddLink(pDentry, pInode);
@@ -96,16 +95,16 @@ ERR:
 struct inode *nvmixNewInode(struct inode *pDir)
 {
     struct super_block *pSb = NULL;
-    struct NvmixSuperBlockInfo *pNsbi = NULL;
+    struct NvmixSuperBlockHelper *pNsbh = NULL;
     struct inode *pInode = NULL;
     unsigned long index = 0;
 
 
     pSb = pDir->i_sb;
-    pNsbi = (struct NvmixSuperBlockInfo *)(pSb->s_fs_info); // 含义解释见 fs.c。
+    pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info); // 含义解释见 fs.c。
 
     // find_first_zero_bit() 是内核提供的一个位图操作函数，其作用是从给定的位图中查找第一个值为 0 的位，即未使用的空闲资源。m_imap 是我们自己定义的管理 inode 分配状态的位图信息，类型是 unsigned long，刚好 4 个字节，32 位。每一位用于标识分配状态。
-    index = find_first_zero_bit(&pNsbi->m_imap, NVMIX_MAX_INODE_NUM);
+    index = find_first_zero_bit(&pNsbh->m_imap, NVMIX_MAX_INODE_NUM);
     if (NVMIX_MAX_INODE_NUM == index)
     {
         pr_err("nvmixfs: no space left in imap.\n");
@@ -114,9 +113,9 @@ struct inode *nvmixNewInode(struct inode *pDir)
     }
 
     // 原子性地测试并设置位图中的目标位，维护 m_imap 状态。
-    test_and_set_bit(index, &pNsbi->m_imap);
+    test_and_set_bit(index, &pNsbh->m_imap);
     // 标记缓冲区为脏，表示内容已被修改，需要写回磁盘。
-    mark_buffer_dirty(pNsbi->m_pBh);
+    mark_buffer_dirty(pNsbh->m_pBh);
 
     pInode = new_inode(pSb);                // 此函数创建新的 inode 结构，并关联到文件系统的超级块。
     pInode->i_uid = current_fsuid();        // 用户所有者 ID。

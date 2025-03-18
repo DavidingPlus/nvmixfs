@@ -1,14 +1,13 @@
-name: Build
+name: Run Unit Test
 
 on:
   push:
     branches:
-      - master
+      - "**"
   workflow_dispatch:
 
-# see more at https://github.com/DavidingPlus/nvmixfs/issues/1
 jobs:
-  build:
+  unit-test:
     runs-on: ubuntu-latest
     container:
       image: ubuntu:20.04
@@ -31,11 +30,8 @@ jobs:
 
           apt install python3 python3-pip -y
 
-          # cmake dependency which needs extra terminal input, annoying
-          # see more at https://blog.csdn.net/jiangjiang_jian/article/details/100731400/
           DEBIAN_FRONTEND=noninteractive apt install tzdata -y
 
-          # conan needs cmake and pip
           apt install cmake -y
 
       - name: Install XMake
@@ -50,7 +46,6 @@ jobs:
           # keep xmake up to date
           xmake update -s dev
 
-      # conan needs pip(by apt) and cmake(by snap recommended)
       - name: Install Conan
         run: |
 
@@ -65,7 +60,7 @@ jobs:
           alias xmake="~/.local/bin/xmake"
           export XMAKE_ROOT=y
 
-          xmake f -m release --linux-headers=/usr/src/linux-headers-${KERNEL_VERSION}/ -y
+          xmake f -m release --linux-headers=/usr/src/linux-headers-${KERNEL_VERSION}/ --with-gtest=true -y
 
       - name: Build Targets
         working-directory: ${{github.workspace}}
@@ -74,4 +69,13 @@ jobs:
           alias xmake="~/.local/bin/xmake"
           export XMAKE_ROOT=y
 
-          xmake build
+          xmake build tests
+
+      - name: Run Unit Test
+        working-directory: ${{github.workspace}}
+        run: |
+
+          alias xmake="~/.local/bin/xmake"
+          export XMAKE_ROOT=y
+
+          xmake run tests

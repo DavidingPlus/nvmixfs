@@ -1,0 +1,82 @@
+name: Run Unit Test
+
+on:
+  push:
+    branches:
+      - master
+      - feature-liuzx-gtest
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:20.04
+    env:
+      KERNEL_VERSION: "5.4.0-208-generic"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+
+          apt update
+
+          apt install curl -y
+
+          apt install build-essential -y
+
+          apt install linux-headers-${KERNEL_VERSION} -y
+
+          apt install python3 python3-pip -y
+
+          DEBIAN_FRONTEND=noninteractive apt install tzdata -y
+
+          apt install cmake -y
+
+      - name: Install XMake
+        run: |
+
+          curl -fsSL https://xmake.io/shget.text | bash
+
+          # use xmake as root
+          alias xmake="~/.local/bin/xmake"
+          export XMAKE_ROOT=y
+
+          # keep xmake up to date
+          xmake update -s dev
+
+      - name: Install Conan
+        run: |
+
+          pip install conan==2.6.0
+
+          conan profile detect
+
+      - name: Configure XMake
+        working-directory: ${{github.workspace}}
+        run: |
+
+          alias xmake="~/.local/bin/xmake"
+          export XMAKE_ROOT=y
+
+          xmake f -m release --linux-headers=/usr/src/linux-headers-${KERNEL_VERSION}/ --with-gtest=true -y
+
+      - name: Build Targets
+        working-directory: ${{github.workspace}}
+        run: |
+
+          alias xmake="~/.local/bin/xmake"
+          export XMAKE_ROOT=y
+
+          xmake build tests
+
+      - name: Run Unit Test
+        working-directory: ${{github.workspace}}
+        run: |
+
+          alias xmake="~/.local/bin/xmake"
+          export XMAKE_ROOT=y
+
+          xmake run tests

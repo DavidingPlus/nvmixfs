@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - feature-liuzx-gtest
   workflow_dispatch:
 
 # see more at https://github.com/DavidingPlus/nvmixfs/issues/1

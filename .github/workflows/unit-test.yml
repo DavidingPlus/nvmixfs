@@ -3,8 +3,7 @@ name: Run Unit Test
 on:
   push:
     branches:
-      - master
-      - feature-liuzx-gtest
+      - "**"
   workflow_dispatch:
 
 jobs:

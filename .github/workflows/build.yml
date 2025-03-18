@@ -40,6 +40,13 @@ jobs:
           # keep xmake up to date
           xmake update -s dev
 
+      - name: Install Conan
+        run: |
+
+          pip install conan==2.6.0
+
+          conan profile detect
+
       - name: Configure XMake
         working-directory: ${{github.workspace}}
         run: |
@@ -47,7 +54,7 @@ jobs:
           alias xmake="~/.local/bin/xmake"
           export XMAKE_ROOT=y
 
-          xmake f -m release --linux-headers=/usr/src/linux-headers-${KERNEL_VERSION}/
+          xmake f -m release --linux-headers=/usr/src/linux-headers-${KERNEL_VERSION}/ -y
       
       - name: Build Targets
         working-directory: ${{github.workspace}}

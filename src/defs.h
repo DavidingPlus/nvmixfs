@@ -62,7 +62,7 @@
 #define NVMIX_MAX_NAME_LENGTH 16
 
 
-struct NvmixDirEntry
+struct NvmixDentry
 {
     char m_name[NVMIX_MAX_NAME_LENGTH];
 
@@ -71,7 +71,15 @@ struct NvmixDirEntry
 
 struct NvmixInode
 {
-    // TODO
+    unsigned int m_mode;
+
+    unsigned int m_uid;
+
+    unsigned int m_gid;
+
+    unsigned int m_size;
+
+    unsigned long m_dataBlockIndex;
 };
 
 

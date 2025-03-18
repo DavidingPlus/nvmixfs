@@ -33,19 +33,19 @@ int nvmixReaddir(struct file *pDir, struct dir_context *pCtx)
 {
     struct inode *pInode = NULL;
     struct super_block *pSb = NULL;
-    struct NvmixInodeInfo *pNii = NULL;
+    struct NvmixInodeHelper *pNih = NULL;
     struct buffer_head *pBh = NULL;
-    struct NvmixDirEntry *pNde = NULL;
+    struct NvmixDentry *pNde = NULL;
     int res = 0;
     int isOver = 0;
 
 
     pInode = pDir->f_inode;
-    pNii = NVMIX_I(pInode);
+    pNih = NVMIX_I(pInode);
 
     pSb = pInode->i_sb;
     // sb_bread() 用于从磁盘读取指定块的数据到内存缓冲区，第一个参数是超级块指针，第二个参数是要读取的逻辑块号。
-    pBh = sb_bread(pSb, pNii->m_dataBlockIndex);
+    pBh = sb_bread(pSb, pNih->m_dataBlockIndex);
     if (!pBh)
     {
         pr_err("nvmixfs: could not read data block.\n");
@@ -57,8 +57,12 @@ int nvmixReaddir(struct file *pDir, struct dir_context *pCtx)
     // dir_context 是内核用于目录遍历操作的关键数据结构。它封装了遍历目录时的上下文信息。主要作用是在多次调用目录遍历函数（如 .iterate 或 .iterate_shared）时，保存遍历的进度和状态，确保每次调用能正确继续上一次的位置。
     for (; pCtx->pos <= NVMIX_MAX_ENTRY_NUM; ++pCtx->pos)
     {
-        // 每个目录项的元数据是我自己定义的 NvmixDirEntry 类型。
-        pNde = (struct NvmixDirEntry *)(pBh->b_data) + pCtx->pos;
+        // 当前处理的对象是目录（特殊文件），包括普通目录，. 和 .. 等。目录不存在数据信息，但与文件一样有 inode 以及 inode 的相关元数据。在磁盘块中目录的数据应额外存储目录下文件的一些信息，至少应关联文件名和 inode 号，方便接口例如 readdir()、lookup() 等使用。这也是内存中的 vfs dentry 做的事情。
+        // 由此，目录的磁盘块存储的是一个 NvmixDentry 数组，记录的信息前面提到了。通过 pBh->b_data 获得 NvmixDentry 数组的头指针，然后加上偏移量即可得到每条目录项的信息。
+        // [Entry 0] -> ino=5, name="file1"
+        // [Entry 1] -> ino = 0, name = "" // 无效条目（0 == m_ino 时跳过）
+        // [Entry 2] -> ino=7, name="dir2"
+        pNde = (struct NvmixDentry *)(pBh->b_data) + pCtx->pos;
 
         // inode 为 0 无效条目，需跳过。
         if (0 == pNde->m_ino) continue;

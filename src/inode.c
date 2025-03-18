@@ -47,8 +47,7 @@ int nvmixCreate(struct inode *pDir, struct dentry *pDentry, umode_t mode, bool e
 {
     int res = 0;
     struct inode *pInode = NULL;
-    // 创建新的 inode 时需要维护我们自己的 inode 元数据。
-    struct NvmixInodeInfo *pNii = NULL;
+    struct NvmixInodeHelper *pNih = NULL;
 
 
     pInode = nvmixNewInode(pDir);
@@ -64,8 +63,8 @@ int nvmixCreate(struct inode *pDir, struct dentry *pDentry, umode_t mode, bool e
     pInode->i_op = &nvmixFileInodeOps;
     pInode->i_fop = &nvmixFileOps;
 
-    pNii = NVMIX_I(pInode);
-    pNii->m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + pInode->i_ino;
+    pNih = NVMIX_I(pInode);
+    pNih->m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + pInode->i_ino;
 
     // 将新 inode 关联到父目录的目录项 dentry 中，会维护并修改父目录项的一些信息。与下面的 d_instantiate() 作用不同，注意区分。
     res = nvmixAddLink(pDentry, pInode);

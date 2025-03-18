@@ -12,3 +12,5 @@ target ("nvmixfs")
 
 
 includes ("snippet")
+
+includes ("test")

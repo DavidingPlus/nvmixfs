@@ -26,6 +26,8 @@ jobs:
 
           apt install curl build-essential -y
 
+          apt install python3 python3-pip -y
+
           apt install linux-headers-${KERNEL_VERSION} -y
 
       - name: Install XMake

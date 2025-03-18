@@ -1,4 +1,5 @@
 option ("linux-headers", {showmenu = true, description = "Set linux-headers path."})
+option ("with-gtest", {showmenu = true, description = "Whether to enable unit test by GTest.", default = false})
 
 
 add_includedirs ("src/")
@@ -13,4 +14,7 @@ target ("nvmixfs")
 
 includes ("snippet")
 
-includes ("test")
+if has_config ("with-gtest") then
+    includes ("test")
+
+end

@@ -80,17 +80,17 @@ int nvmixFillSuper(struct super_block *pSuperBlock, void *pData, int silent)
 
 void nvmixPutSuper(struct super_block *pSb)
 {
-    struct NvmixSuperBlockInfo *pNsbi = NULL;
+    struct NvmixSuperBlockHelper *pNsbh = NULL;
 
 
     // s_fs_info 类似于 file 结构的 private_data，是文件系统中可被我们自己定义的私有数据信息。s_fs_info 在 fill_super 时会被初始化。这里拿到该部分数据以推进后续代码。
-    pNsbi = (struct NvmixSuperBlockInfo *)(pSb->s_fs_info);
+    pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
 
     // 标记缓冲区为脏，表示内容已被修改，需要写回磁盘。
-    mark_buffer_dirty(pNsbi->m_pBh);
+    mark_buffer_dirty(pNsbh->m_pBh);
     // 释放缓冲区头。
-    brelse(pNsbi->m_pBh);
-    pNsbi->m_pBh = NULL;
+    brelse(pNsbh->m_pBh);
+    pNsbh->m_pBh = NULL;
 
     pr_info("nvmixfs: released super block resources.\n");
 }

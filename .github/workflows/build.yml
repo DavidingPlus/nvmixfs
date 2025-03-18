@@ -28,16 +28,16 @@ jobs:
 
           apt install build-essential -y
 
-          # cmake dependency which needs extra terminal input, annoying
-          # see more at https://blog.xzr.moe/archives/151/
-          echo "Asia\nShanghai" | apt install tzdata -y
-
-          # conan needs cmake and pip
-          apt install cmake -y
+          apt install linux-headers-${KERNEL_VERSION} -y
 
           apt install python3 python3-pip -y
 
-          apt install linux-headers-${KERNEL_VERSION} -y
+          # cmake dependency which needs extra terminal input, annoying
+          # see more at https://blog.csdn.net/jiangjiang_jian/article/details/100731400/
+          DEBIAN_FRONTEND=noninteractive apt install tzdata -y
+
+          # conan needs cmake and pip
+          apt install cmake -y
 
       - name: Install XMake
         run: |
@@ -51,6 +51,7 @@ jobs:
           # keep xmake up to date
           xmake update -s dev
 
+      # conan needs pip(by apt) and cmake(by snap recommended)
       - name: Install Conan
         run: |
 

@@ -1,4 +1,4 @@
--- need to install cmake(by snap recommended) and conan(by pip)
+-- conan needs pip(by apt) and cmake(by snap recommended)
 add_requires("conan::gtest 1.12.1", {alias = "gtest"})
 
 

@@ -11,6 +11,8 @@ target ("nvmixfs")
     set_languages ("gnu99")
     add_cflags ("-O1")
 
+    set_targetdir ("$(buildir)/$(plat)/$(arch)/$(mode)/bin/")
+
 
 includes ("snippet")
 

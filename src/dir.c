@@ -59,9 +59,9 @@ int nvmixReaddir(struct file *pDir, struct dir_context *pCtx)
     {
         // 当前处理的对象是目录（特殊文件），包括普通目录，. 和 .. 等。目录不存在数据信息，但与文件一样有 inode 以及 inode 的相关元数据。在磁盘块中目录的数据应额外存储目录下文件的一些信息，至少应关联文件名和 inode 号，方便接口例如 readdir()、lookup() 等使用。这也是内存中的 vfs dentry 做的事情。
         // 由此，目录的磁盘块存储的是一个 NvmixDentry 数组，记录的信息前面提到了。通过 pBh->b_data 获得 NvmixDentry 数组的头指针，然后加上偏移量即可得到每条目录项的信息。
-        // [Entry 0] -> ino=5, name="file1"
-        // [Entry 1] -> ino = 0, name = "" // 无效条目（0 == m_ino 时跳过）
-        // [Entry 2] -> ino=7, name="dir2"
+        // [Entry 0] -> ino = 5, name = "file1"
+        // [Entry 1] -> ino = 0, name = ""（无效条目，0 == m_ino 时跳过）
+        // [Entry 2] -> ino = 7, name = "dir2"
         pNde = (struct NvmixDentry *)(pBh->b_data) + pCtx->pos;
 
         // inode 为 0 无效条目，需跳过。

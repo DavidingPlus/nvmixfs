@@ -29,9 +29,9 @@ struct file_operations nvmixDirOps = {
     .iterate = nvmixReaddir,
 };
 
-int nvmixReaddir(struct file *pDir, struct dir_context *pCtx)
+int nvmixReaddir(struct file *pParentDirFile, struct dir_context *pCtx)
 {
-    struct inode *pInode = NULL;
+    struct inode *pParentDirInode = NULL;
     struct super_block *pSb = NULL;
     struct NvmixInodeHelper *pNih = NULL;
     struct buffer_head *pBh = NULL;
@@ -40,11 +40,12 @@ int nvmixReaddir(struct file *pDir, struct dir_context *pCtx)
     int isOver = 0;
 
 
-    pInode = pDir->f_inode;
-    pNih = NVMIX_I(pInode);
+    pParentDirInode = pParentDirFile->f_inode;
+    pNih = NVMIX_I(pParentDirInode);
 
-    pSb = pInode->i_sb;
-    // sb_bread() 用于从磁盘读取指定块的数据到内存缓冲区，第一个参数是超级块指针，第二个参数是要读取的逻辑块号。
+    pSb = pParentDirInode->i_sb;
+    // sb_bread() 用于从磁盘读取指定块的数据到内存缓冲区，第一个参数是超级块指针，第二个参数是要读取的逻辑块号。返回缓冲区的头指针。
+    // 目录的数据块存储的设计见 defs.h，这样能更方便理解下面的逻辑。
     pBh = sb_bread(pSb, pNih->m_dataBlockIndex);
     if (!pBh)
     {
@@ -71,7 +72,7 @@ int nvmixReaddir(struct file *pDir, struct dir_context *pCtx)
         isOver = dir_emit(pCtx, pNde->m_name, NVMIX_MAX_NAME_LENGTH, pNde->m_ino, DT_UNKNOWN);
         if (isOver)
         {
-            pr_info("nvmixfs: read %s from directory %s, ctx->pos: %lld\n", pNde->m_name, pDir->f_path.dentry->d_name.name, pCtx->pos);
+            pr_info("nvmixfs: read %s from directory %s, ctx->pos: %lld\n", pNde->m_name, pParentDirFile->f_path.dentry->d_name.name, pCtx->pos);
 
             ++pCtx->pos; // 当前 pos 位置读取完毕，跳到下个位置并跳出循环。
 
@@ -79,11 +80,12 @@ int nvmixReaddir(struct file *pDir, struct dir_context *pCtx)
         }
     }
 
-    // 释放缓冲区头。
+
+ERR:
+    // 释放缓冲区。
     brelse(pBh);
     pBh = NULL;
 
 
-ERR:
     return res;
 }

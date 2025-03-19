@@ -163,12 +163,13 @@ int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
 
     mark_buffer_dirty(pBh);
 
-    brelse(pBh);
-    pBh = NULL;
-
     pr_info("nvmixfs: wrote inode %lu successfully.\n", pInode->i_ino);
 
 
 ERR:
+    brelse(pBh);
+    pBh = NULL;
+
+
     return res;
 }

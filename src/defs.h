@@ -2,6 +2,7 @@
  * @file defs.h
  * @author DavidingPlus (davidingplus@qq.com)
  * @brief 定义本文件系统的元数据的头文件。
+ * @details 本文件定义了本文件系统必要的元数据，需要存储在磁盘上。注意与内存中 vfs 的数据结构区分开来，此文件的数据结构是本文件系统自己定义并且维护的。本文件需要被用户层程序 MkfsApp 引用，因此文件中不能放置任何内核 vfs 的数据结构，例如 struct inode、struct buffer_head 等。但在实际过程中本文件系统的元数据结构显然是需要与 vfs 的数据结构打交道的，因此设计了辅助结构 NvmixSuperBlockHelper 和 NvmixInodeHelper 等。
  *
  * Copyright (c) 2024 电子科技大学 刘治学
  *
@@ -11,20 +12,6 @@
 #ifndef _NVMIX_DEFS_H_
 #define _NVMIX_DEFS_H_
 
-
-/*
- * Filesystem layout:
- *
- *      SB      IZONE 	     DATA
- *    ^	    ^ (1 block)
- *    |     |
- *    +-0   +-- 4096
- * @brief 目前本文件系统设计的非常简单，数据块以 4 KIB 为单位。第一个块存储超级块，第二个块是 inode 区。由于目前限制了文件系统总 inode 的数量为 32，4 KIB 是够用的。因此数据块从块号 2 开始。这是经典的三段式布局。
- * @details 此文件定义了本文件系统必要的元数据，需要存储在磁盘上。注意与内存中 vfs 的数据结构区分开来，此文件的数据结构是本文件系统自己定义并且维护的。此文件 defs.h 需要被用户层程序 MkfsApp 引用，此文件中不能放置内核独有的数据结构，例如 struct inode、struct buffer_head 等。但在实际过程中本文件系统的元数据结构显然是需要与 vfs 的数据结构打交道的，因此有辅助结构 NvmixSuperBlockHelper 和 NvmixInodeHelper 等。
- * @todo super_block 区注释。
- * @details inode 区存放 NvmixInode 数组，用于管理本文件系统的所有 inode 元数据。
- * @details data 区以 4 KIB 为单位，每个文件或目录使用一个数据块，因此目前对文件的最大大小也限制为 4 KIB。文件的数据块存储数据的字节流。目录的数据块存储 NvmixDentry 数组，记录该目录下所有的目录项的信息。具体使用详见各自文件。
- */
 
 /**
  * @brief 超级块的逻辑块号。

@@ -173,7 +173,7 @@ int nvmixAddLink(struct dentry *pDentry, struct inode *pInode)
     // 判断父目录是否已经满了。
     if (NVMIX_MAX_ENTRY_NUM == i)
     {
-        pr_err("nvmixfs: failed to add link cause parent directory is full.\n");
+        pr_err("nvmixfs: failed to add link, because parent directory is full.\n");
 
         res = -ENOSPC;
         goto ERR;
@@ -181,7 +181,7 @@ int nvmixAddLink(struct dentry *pDentry, struct inode *pInode)
 
     // 填充磁盘上新目录项的元数据。
     pNd->m_ino = pInode->i_ino;
-    memcpy(pNd->m_name, pDentry->d_name.name, NVMIX_MAX_NAME_LENGTH);
+    strncpy(pNd->m_name, pDentry->d_name.name, NVMIX_MAX_NAME_LENGTH);
 
     // 修改父目录的 Modified Time 和 Changed Time，维护 vfs 的数据结构。
     pParentDirInode->i_mtime = current_time(pInode);

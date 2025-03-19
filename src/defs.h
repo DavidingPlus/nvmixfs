@@ -8,7 +8,6 @@
  *
  */
 
-
 #ifndef _NVMIX_DEFS_H_
 #define _NVMIX_DEFS_H_
 
@@ -76,14 +75,38 @@ struct NvmixDentry
  */
 struct NvmixInode
 {
+    /**
+     * @brief 文件类型和权限的位掩码组合。
+     * @details 高位表示文件类型，低位表示权限。
+     * 文件类型：使用宏定义判断（如 S_ISREG(mode) 检测普通文件）。
+     * - S_IFMT：文件类型掩码（0170000）。
+     * - S_IFREG：普通文件（0100000）。
+     * - S_IFDIR：目录（0040000）。
+     * 权限部分：低 12 位，按 0ABC 八进制格式解析。
+     * - A（用户）：0 ~ 2 位 == rwx （例: 07 == 111₂ == rwx）。
+     * - B（组）：3 ~ 5 位 == rwx （例: 05 == 101₂ == r-x）。
+     * - C（其他）：6 ~ 8 位 == rwx （例: 04 == 100₂ == r--）。
+     */
     unsigned int m_mode;
 
+    /**
+     * @brief 文件或目录所有者的用户 ID。
+     */
     unsigned int m_uid;
 
+    /**
+     * @brief 文件或目录所属组的组 ID。
+     */
     unsigned int m_gid;
 
+    /**
+     * @brief 文件或目录的大小（以字节为单位）。
+     */
     unsigned int m_size;
 
+    /**
+     * @brief 文件或目录对应的数据块的逻辑块号。
+     */
     unsigned short m_dataBlockIndex;
 };
 

@@ -42,5 +42,7 @@ void nvmixDestroyInode(struct inode *);
 
 int nvmixWriteInode(struct inode *, struct writeback_control *);
 
+struct inode *nvmixIget(struct super_block *, unsigned long);
+
 
 #endif

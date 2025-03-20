@@ -36,11 +36,46 @@ static inline struct inode *nvmixNewInode(struct inode *);
 
 static inline int nvmixAddLink(struct dentry *, struct inode *);
 
+static inline struct NvmixDentry *nvmixFindDentry(struct dentry *);
 
+
+// 接口参数含义同 nvmixCreate()。
 struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry, unsigned int flags)
 {
-    // TODO
+    struct super_block *pSb = NULL;
+    struct NvmixDentry *pNd = NULL;
+    struct inode *pInode = NULL;
 
+
+    pSb = pParentDirInode->i_sb;
+    // 继承根目录的 dentry_operations 操作。我很疑惑既然内核都帮我创建出 pDentry 了，为什么不帮我们处理好这部分逻辑。
+    pDentry->d_op = pSb->s_root->d_op;
+
+    pr_info("nvmixfs: start looking up dentry %s\n", pDentry->d_name.name);
+
+    // 通过 vfs dentry 找到磁盘块上该目录的 NvmixDentry 信息。
+    pNd = nvmixFindDentry(pDentry);
+    // 注意未找到并不代表失败需要报错，只是代表 dentry 并无对应 inode，将其置为负状态即可（下面的 d_add()）。
+    if (!pNd)
+    {
+        pr_info("nvmixfs: could not find target dentry in directory.\n");
+    }
+    else
+    {
+        pr_info("nvmixfs: found entry successfully: name: %s, ino: %ld\n", pNd->m_name, pNd->m_ino);
+
+        // 通过 super_block 和全局唯一 inode 号找到对应 inode 结构。
+        pInode = nvmixIget(pSb, pNd->m_ino);
+
+        // ERR_CAST() 将错误指针转化为 void * 类型。
+        if (IS_ERR(pInode)) return ERR_CAST(pInode);
+    }
+
+    // d_add() 函数用于将 dentry 绑定到关联的 inode，并将该 dentry 添加到哈希队列中，以便后续快速查找。
+    // 如果 pInode 为空，即走上面 pNd 为空代表找不到匹配的 dentry 和 inode 的分支，此时的 pDentry 为负状态。即当文件不存在时，负状态的 dentry 会被缓存，避免重复触发实际文件系统的查找操作。多次访问一个不存在的文件，负状态的 dentry 会直接返回 ENOENT。因此上面的两个分支都会走该函数。
+    d_add(pDentry, pInode);
+
+    // 大多数情况返回 NULL 表示成功。返回非空的 struct dentry * 代表是可能一些特殊情况，这里暂未遇到。
     return NULL;
 }
 
@@ -196,4 +231,11 @@ ERR:
 
 
     return res;
+}
+
+struct NvmixDentry *nvmixFindDentry(struct dentry *pDentry)
+{
+    // TODO
+
+    return (struct NvmixDentry *)NULL;
 }

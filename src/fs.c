@@ -173,3 +173,13 @@ ERR:
 
     return res;
 }
+
+// 此函数通过 super_block 结构和 vfs 中全局唯一 inode 号获得 inode。包括如下两种情况：
+// 1. 从缓存中获取 inode：若 inode 已存在于内存中（缓存命中），直接返回。
+// 2. 初始化新 inode：若 inode 未缓存（I_NEW 状态），从磁盘读取元数据并初始化 vfs inode。
+struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
+{
+    // TODO
+
+    return (struct inode *)NULL;
+}

@@ -36,7 +36,7 @@ static inline struct inode *nvmixNewInode(struct inode *);
 
 static inline int nvmixAddLink(struct dentry *, struct inode *);
 
-static inline struct NvmixDentry *nvmixFindDentry(struct dentry *);
+static inline struct NvmixDentry *nvmixFindDentry(struct dentry *, struct buffer_head **);
 
 
 // 接口参数含义同 nvmixCreate()。
@@ -45,6 +45,7 @@ struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry
     struct super_block *pSb = NULL;
     struct NvmixDentry *pNd = NULL;
     struct inode *pInode = NULL;
+    struct buffer_head *pBh = NULL;
 
 
     pSb = pParentDirInode->i_sb;
@@ -54,7 +55,7 @@ struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry
     pr_info("nvmixfs: start looking up dentry %s\n", pDentry->d_name.name);
 
     // 通过 vfs dentry 找到磁盘块上该目录的 NvmixDentry 信息。
-    pNd = nvmixFindDentry(pDentry);
+    pNd = nvmixFindDentry(pDentry, &pBh);
     // 注意未找到并不代表失败需要报错，只是代表 dentry 并无对应 inode，将其置为负状态即可（下面的 d_add()）。
     if (!pNd)
     {
@@ -74,6 +75,10 @@ struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry
     // d_add() 函数用于将 dentry 绑定到关联的 inode，并将该 dentry 添加到哈希队列中，以便后续快速查找。
     // 如果 pInode 为空，即走上面 pNd 为空代表找不到匹配的 dentry 和 inode 的分支，此时的 pDentry 为负状态。即当文件不存在时，负状态的 dentry 会被缓存，避免重复触发实际文件系统的查找操作。多次访问一个不存在的文件，负状态的 dentry 会直接返回 ENOENT。因此上面的两个分支都会走该函数。
     d_add(pDentry, pInode);
+
+    brelse(pBh);
+    pBh = NULL;
+
 
     // 大多数情况返回 NULL 表示成功。返回非空的 struct dentry * 代表是可能一些特殊情况，这里暂未遇到。
     return NULL;
@@ -233,8 +238,8 @@ ERR:
     return res;
 }
 
-// 通过给定目标的 vfs dentry 结构找到对应磁盘的 NvmixDentry 结构。
-struct NvmixDentry *nvmixFindDentry(struct dentry *pDentry)
+// 通过给定目标的 vfs dentry 结构找到对应磁盘的 NvmixDentry 结构。为什么要设置参数 struct buffer_head **ppBh 看下面。
+struct NvmixDentry *nvmixFindDentry(struct dentry *pDentry, struct buffer_head **ppBh)
 {
     struct inode *pParentDirInode = NULL;
     struct buffer_head *pBh = NULL;
@@ -258,6 +263,8 @@ struct NvmixDentry *nvmixFindDentry(struct dentry *pDentry)
         goto ERR;
     }
 
+    *ppBh = pBh;
+
     for (i = 0; i < NVMIX_MAX_ENTRY_NUM; ++i)
     {
         pNd = (struct NvmixDentry *)(pBh->b_data) + i;
@@ -273,10 +280,7 @@ struct NvmixDentry *nvmixFindDentry(struct dentry *pDentry)
     }
 
 
+// 注意，这里一定不能释放 pBh，因为返回的 struct NvmixDentry * 依赖于 pBh 缓冲区的存在。如果释放了，传递出去以后就会内存泄露。nvmixFindDentry() 作为唯一被 nvmixLookup() 调用的工具函数，nvmixLookup() 需要用到 struct NvmixDentry * 指针，因此需要需要想办法将 pBh 传递出去。一种合适的方法就是使用 pBh 的指针，即二级指针 struct buffer_head **。至于 pBh 的释放留到 nvmixLookup() 中。
 ERR:
-    brelse(pBh);
-    pBh = NULL;
-
-
     return pRes;
 }

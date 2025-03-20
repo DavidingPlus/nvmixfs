@@ -51,6 +51,11 @@
 #define NVMIX_MAX_NAME_LENGTH 16
 
 
+struct NvmixSuperBlock
+{
+    // TODO
+};
+
 /**
  * @struct NvmixDentry
  * @brief 目录项的元数据信息。

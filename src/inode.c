@@ -233,9 +233,50 @@ ERR:
     return res;
 }
 
+// 通过给定目标的 vfs dentry 结构找到对应磁盘的 NvmixDentry 结构。
 struct NvmixDentry *nvmixFindDentry(struct dentry *pDentry)
 {
-    // TODO
+    struct inode *pParentDirInode = NULL;
+    struct buffer_head *pBh = NULL;
+    struct super_block *pSb = NULL;
+    struct NvmixInodeHelper *pNih = NULL;
+    struct NvmixDentry *pNd = NULL;
+    struct NvmixDentry *pRes = NULL;
+    int i = 0;
 
-    return (struct NvmixDentry *)NULL;
+
+    // 读取父目录的目录项数组信息，并进行查找。
+    pParentDirInode = pDentry->d_parent->d_inode;
+    pSb = pParentDirInode->i_sb;
+    pNih = NVMIX_I(pParentDirInode);
+
+    pBh = sb_bread(pSb, pNih->m_dataBlockIndex);
+    if (!pBh)
+    {
+        pr_err("nvmixfs: could not read data block.\n");
+
+        goto ERR;
+    }
+
+    for (i = 0; i < NVMIX_MAX_ENTRY_NUM; ++i)
+    {
+        pNd = (struct NvmixDentry *)(pBh->b_data) + i;
+        if ((0 != pNd->m_ino) && (0 == strcmp(pNd->m_name, pDentry->d_name.name)))
+        {
+            pr_info("nvmixfs: found entry %s on position: %d\n", pNd->m_name, i);
+
+            // 需要使用 pRes 存储返回值。因为 pNd 是遍历指针，如果找到条目了返回当然没问题，如果没找到就指向末元素，这样返回值就会出问题了。使用 pRes 则不会出现这样的问题，找到了赋值，找不到仍然是 NULL。
+            pRes = pNd;
+
+            break;
+        }
+    }
+
+
+ERR:
+    brelse(pBh);
+    pBh = NULL;
+
+
+    return pRes;
 }

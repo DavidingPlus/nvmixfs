@@ -3,7 +3,7 @@
  * @author DavidingPlus (davidingplus@qq.com)
  * @brief nvmixfs 内核模块主程序入口文件。
  *
- * Copyright (c) 2024 电子科技大学 刘治学
+ * Copyright (c) 2025 电子科技大学 刘治学
  *
  */
 

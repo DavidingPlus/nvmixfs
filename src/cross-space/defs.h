@@ -11,11 +11,10 @@
 #ifndef _NVMIX_DEFS_H_
 #define _NVMIX_DEFS_H_
 
+#include "globalmacros.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+
+NVMIX_EXTERN_C_BEGIN
 
 
 /**
@@ -122,9 +121,7 @@ struct NvmixInode
 };
 
 
-#ifdef __cplusplus
-}
-#endif
+NVMIX_EXTERN_C_END
 
 
 #endif

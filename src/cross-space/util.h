@@ -11,14 +11,11 @@
 #ifndef _NVMIX_UTIL_H_
 #define _NVMIX_UTIL_H_
 
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-
+#include "globalmacros.h"
 #include "defs.h"
+
+
+NVMIX_EXTERN_C_BEGIN
 
 
 #define NVMIX_DIV_ROUND_UP(n, d) (((n) + (d)-1) / (d))
@@ -31,9 +28,7 @@ extern "C"
 unsigned long long nvmixCalcInodeBlocks(long long size);
 
 
-#ifdef __cplusplus
-}
-#endif
+NVMIX_EXTERN_C_END
 
 
 #endif

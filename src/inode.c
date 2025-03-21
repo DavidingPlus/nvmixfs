@@ -33,12 +33,13 @@ extern struct file_operations nvmixFileFileOps;
 extern struct address_space_operations nvmixAops;
 
 
-// 静态函数只能被当前源文件使用，类似于 C++ 类中的私有成员函数。不建议声明在头文件中，因为头文件可能被其他文件包含，可能会出现未知问题，同时可能也会降低链接速度。
-static inline struct inode *nvmixNewInode(struct inode *);
+// static 静态函数只能被当前源文件使用，类似于 C++ 类中的私有成员函数。不建议声明在头文件中，因为头文件可能被其他文件包含，可能会出现未知问题，同时可能也会降低链接速度。
+// inline 即内联，建议放在很少行数（最好是一行）的函数使用，在调用函数的时候会类似宏一样直接展开，不用走函数调用栈，提高效率。但如果函数过长，不建议加上 inline，这样反而会导致代码冗余。
+static struct inode *nvmixNewInode(struct inode *);
 
-static inline int nvmixAddLink(struct dentry *, struct inode *);
+static int nvmixAddLink(struct dentry *, struct inode *);
 
-static inline struct NvmixDentry *nvmixFindDentry(struct dentry *, struct buffer_head **);
+static struct NvmixDentry *nvmixFindDentry(struct dentry *, struct buffer_head **);
 
 
 // 接口参数含义同 nvmixCreate()。

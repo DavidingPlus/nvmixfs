@@ -11,7 +11,11 @@
 #ifndef _NVMIX_UTIL_H_
 #define _NVMIX_UTIL_H_
 
+#include "globalmacros.h"
 #include "defs.h"
+
+
+NVMIX_EXTERN_C_BEGIN
 
 
 #define NVMIX_DIV_ROUND_UP(n, d) (((n) + (d)-1) / (d))
@@ -22,6 +26,9 @@
 // blkcnt_t（返回值） == unsigned long long
 // loff_t（参数） == long long
 unsigned long long nvmixCalcInodeBlocks(long long size);
+
+
+NVMIX_EXTERN_C_END
 
 
 #endif

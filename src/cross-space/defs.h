@@ -11,6 +11,11 @@
 #ifndef _NVMIX_DEFS_H_
 #define _NVMIX_DEFS_H_
 
+#include "globalmacros.h"
+
+
+NVMIX_EXTERN_C_BEGIN
+
 
 /**
  * @brief 超级块的逻辑块号。
@@ -114,6 +119,9 @@ struct NvmixInode
      */
     unsigned short m_dataBlockIndex;
 };
+
+
+NVMIX_EXTERN_C_END
 
 
 #endif

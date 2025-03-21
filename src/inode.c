@@ -28,7 +28,7 @@ struct inode_operations nvmixDirInodeOps = {
 };
 
 // 由进程打开的文件（用 file 结构描述）的操作接口。
-extern struct file_operations nvmixFileOps;
+extern struct file_operations nvmixFileFileOps;
 
 extern struct address_space_operations nvmixAops;
 
@@ -107,7 +107,7 @@ int nvmixCreate(struct inode *pParentDirInode, struct dentry *pDentry, umode_t m
 
     // 参考 ext4_create()，对这些操作做了注册。
     pInode->i_op = &nvmixFileInodeOps;
-    pInode->i_fop = &nvmixFileOps;
+    pInode->i_fop = &nvmixFileFileOps;
     pInode->i_mapping->a_ops = &nvmixAops;
 
     pNih = NVMIX_I(pInode);

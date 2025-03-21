@@ -37,9 +37,9 @@ struct super_operations nvmixSuperOps = {
 
 extern struct address_space_operations nvmixAops;
 
-extern struct file_operations nvmixFileOps;
+extern struct file_operations nvmixFileFileOps;
 
-extern struct file_operations nvmixDirOps;
+extern struct file_operations nvmixDirFileOps;
 
 extern struct inode_operations nvmixFileInodeOps;
 
@@ -249,7 +249,7 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
     // 根据 inode 是文件还是目录进行不同操作的注册。
     if (S_ISDIR(pInode->i_mode))
     {
-        pInode->i_fop = &nvmixDirOps;
+        pInode->i_fop = &nvmixDirFileOps;
         pInode->i_op = &nvmixDirInodeOps;
 
         // inode 的硬链接个数 i_nlink 默认为 1。但对目录应为 2。例如新建目录 temp，两个硬链接分别为 temp 目录的 . 和父目录的 temp。
@@ -258,7 +258,7 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
     }
     else if (S_ISREG(pInode->i_mode))
     {
-        pInode->i_fop = &nvmixFileOps;
+        pInode->i_fop = &nvmixFileFileOps;
         pInode->i_op = &nvmixFileInodeOps;
     }
     else

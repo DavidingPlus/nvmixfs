@@ -17,7 +17,7 @@
 
 
 // 由进程打开的目录（用 file 结构描述）的操作接口。
-struct file_operations nvmixDirOps = {
+struct file_operations nvmixDirFileOps = {
     .owner = THIS_MODULE,
     // read 是 2.6 版本以前的旧接口，iterate 和 iterate_shared 是 2.6 以后的接口，都可用来遍历目录。
     // read 不支持并发访问。

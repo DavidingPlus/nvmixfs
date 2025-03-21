@@ -35,6 +35,12 @@ struct super_operations nvmixSuperOps = {
     .write_inode = nvmixWriteInode,
 };
 
+extern struct address_space_operations nvmixAops;
+
+
+// 通过 inode 对应目录项的大小转化为 inode->i_blocks 的值，注意 inode->i_blocks 以 512 B 为单位。
+static inline blkcnt_t calcInodeBlocks(loff_t);
+
 
 struct dentry *nvmixMount(struct file_system_type *pFileSystemType, int flags, const char *pDevName, void *pData)
 {
@@ -179,7 +185,73 @@ ERR:
 // 2. 初始化新 inode：若 inode 未缓存（I_NEW 状态），从磁盘读取元数据并初始化 vfs inode。
 struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
 {
-    // TODO
+    struct inode *pInode = NULL;
+    struct buffer_head *pBh = NULL;
+    struct NvmixInode *pNi = NULL;
 
-    return (struct inode *)NULL;
+
+    // iget_locked() 是内核提供的函数，根据超级块 pSb 和 inode 号在 vfs 缓存中查找已有 inode。
+    // 如果找到且有效，直接返回已存在的 inode。
+    // 如果未找到，即指定的 inode 号不在 vfs 缓存中，这时需要分配新的 inode 结构，并标记为 I_NEW，然后从磁盘读取数据填充。
+    // 还有一种情况是找到但无效（需要更新）。虽然 inode 在缓存中存在，但可能因为某些原因（如文件系统需要强制重新加载），这时可能需要丢弃旧的 inode，创建新的实例。不过这种情况在标准 vfs 机制中并不常见，通常 inode 会保持有效直到被回收。这里暂不考虑。
+    pInode = iget_locked(pSb, ino);
+    if (!pInode)
+    {
+        pr_err("nvmixfs: error when acquiring inode from vfs cache.\n");
+
+        iget_failed(pInode);
+
+
+        return ERR_PTR(-ENOMEM);
+    }
+
+    // 如果在缓存中找到，直接返回。
+    if (!(pInode->i_state & I_NEW)) return pInode;
+
+    // 未找到，从磁盘中读取。
+    pBh = sb_bread(pSb, NVMIX_INODE_BLOCK_INDEX);
+    if (!pBh)
+    {
+        pr_err("nvmixfs: could not read inode block.\n");
+
+        iget_failed(pInode);
+
+
+        return NULL;
+    }
+
+    pNi = (struct NvmixInode *)(pBh->b_data) + ino;
+
+    pInode->i_mode = pNi->m_mode;
+    i_uid_write(pInode, pNi->m_uid);
+    i_gid_write(pInode, pNi->m_gid);
+    pInode->i_size = pNi->m_size;
+    pInode->i_mtime = current_time(pInode);
+    pInode->i_atime = current_time(pInode);
+    pInode->i_ctime = current_time(pInode);
+
+    // 封装了一个函数专门计算 i_blocks。
+    // 但由于目前本文件系统限制了文件的最大大小为一个块，即 4 KIB，因此这个值不是 0 就是 1。这样为以后的改造留出了口子。
+    pInode->i_blocks = calcInodeBlocks(pInode->i_size);
+
+    // 填充 page cache 相关的 address space operations。
+    pInode->i_mapping->a_ops = &nvmixAops;
+
+    // TODO 根据 inode 是文件还是目录进行针对性操作。
+
+
+    brelse(pBh);
+    pBh = NULL;
+
+
+    return pInode;
+}
+
+
+blkcnt_t calcInodeBlocks(loff_t size)
+{
+    if (0 == size) return (blkcnt_t)0;
+
+
+    return (blkcnt_t)DIV_ROUND_UP(size, NVMIX_BLOCK_SIZE) * (NVMIX_BLOCK_SIZE / 512);
 }

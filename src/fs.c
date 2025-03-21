@@ -37,6 +37,14 @@ struct super_operations nvmixSuperOps = {
 
 extern struct address_space_operations nvmixAops;
 
+extern struct file_operations nvmixFileOps;
+
+extern struct file_operations nvmixDirOps;
+
+extern struct inode_operations nvmixFileInodeOps;
+
+extern struct inode_operations nvmixDirInodeOps;
+
 
 // 通过 inode 对应目录项的大小转化为 inode->i_blocks 的值，注意 inode->i_blocks 以 512 B 为单位。
 static inline blkcnt_t calcInodeBlocks(loff_t);
@@ -188,6 +196,7 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
     struct inode *pInode = NULL;
     struct buffer_head *pBh = NULL;
     struct NvmixInode *pNi = NULL;
+    struct NvmixInodeHelper *pNih = NULL;
 
 
     // iget_locked() 是内核提供的函数，根据超级块 pSb 和 inode 号在 vfs 缓存中查找已有 inode。
@@ -234,11 +243,35 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
     // 但由于目前本文件系统限制了文件的最大大小为一个块，即 4 KIB，因此这个值不是 0 就是 1。这样为以后的改造留出了口子。
     pInode->i_blocks = calcInodeBlocks(pInode->i_size);
 
-    // 填充 page cache 相关的 address space operations。
+    // 填充 page cache 相关的 address_space_operations。
     pInode->i_mapping->a_ops = &nvmixAops;
 
-    // TODO 根据 inode 是文件还是目录进行针对性操作。
+    // 根据 inode 是文件还是目录进行不同操作的注册。
+    if (S_ISDIR(pInode->i_mode))
+    {
+        pInode->i_fop = &nvmixDirOps;
+        pInode->i_op = &nvmixDirInodeOps;
 
+        // inode 的硬链接个数 i_nlink 默认为 1。但对目录应为 2。例如新建目录 temp，两个硬链接分别为 temp 目录的 . 和父目录的 temp。
+        // 硬链接与原始文件共享相同的 inode（索引节点），即两者指向磁盘上的同一块数据。删除原始文件后，只要存在至少一个硬链接，文件数据仍可通过其他硬链接访问。
+        inc_nlink(pInode);
+    }
+    else if (S_ISREG(pInode->i_mode))
+    {
+        pInode->i_fop = &nvmixFileOps;
+        pInode->i_op = &nvmixFileInodeOps;
+    }
+    else
+    {
+        // 非普通文件或目录，暂不考虑。
+    }
+
+    // 更新 inode 对应的 NvmixInodeHelper 结构的逻辑块号。
+    pNih = NVMIX_I(pInode);
+    pNih->m_dataBlockIndex = pNi->m_dataBlockIndex;
+
+    // 与 iget_locked() 配合，确保新 inode 在初始化完成后安全解锁，保障并发访问的正确性。
+    unlock_new_inode(pInode);
 
     brelse(pBh);
     pBh = NULL;

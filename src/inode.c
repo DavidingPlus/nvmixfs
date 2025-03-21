@@ -16,15 +16,15 @@
 #include <linux/buffer_head.h>
 
 
+// 文件 inode 的操作接口。
+struct inode_operations nvmixFileInodeOps = {
+    .getattr = simple_getattr,
+};
+
 // 目录 inode 的操作接口。
 struct inode_operations nvmixDirInodeOps = {
     .lookup = nvmixLookup,
     .create = nvmixCreate,
-};
-
-// 文件 inode 的操作接口。
-struct inode_operations nvmixFileInodeOps = {
-    .getattr = simple_getattr,
 };
 
 // 由进程打开的文件（用 file 结构描述）的操作接口。

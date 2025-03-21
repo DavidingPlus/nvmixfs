@@ -134,7 +134,7 @@ ERR:
 }
 
 
-// 此函数的语义是在父目录下创建新 inode。参数 struct inode* pParentDirInode 代表父目录。在 create() 语义下返回的 inode 是一个文件。创建目录有函数 mkdir()。
+// 此函数的语义是在父目录下创建新的通用的 inode，并做基本通用项的初始化（具体见下面）。参数 struct inode* pParentDirInode 代表父目录。在 create() 语义下返回的 inode 是一个文件。创建目录有函数 mkdir()，里面也会调用此函数，在那的语义返回的 inode 就是一个目录。
 struct inode *nvmixNewInode(struct inode *pParentDirInode)
 {
     struct super_block *pSb = NULL;
@@ -160,7 +160,10 @@ struct inode *nvmixNewInode(struct inode *pParentDirInode)
     // 标记缓冲区为脏，表示内容已被修改，需要写回磁盘。
     mark_buffer_dirty(pNsbh->m_pBh);
 
-    pInode = new_inode(pSb);                // 此函数创建新的 inode 结构，并关联到文件系统的超级块。
+    pInode = new_inode(pSb); // 此函数创建新的 inode 结构，并关联到文件系统的超级块。
+
+    // 初始化通用 vfs inode 的一些信息。
+    // 注意，本函数返回的可能是文件或目录的 inode，这二者的 inode 中需要填充不同项的内容。但 nvmixNewInode() 的语义是创建一个通用 inode，故只处理通用的部分，这些赋值只能放在这里而不能放在外层的 nvmixCreate() 或 nvmixMkdir() 中。
     pInode->i_uid = current_fsuid();        // 用户所有者 ID。
     pInode->i_gid = current_fsgid();        // 组所有者 ID。
     pInode->i_ino = index;                  // inode 编号。

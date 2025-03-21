@@ -12,6 +12,12 @@
 #define _NVMIX_DEFS_H_
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
 /**
  * @brief 超级块的逻辑块号。
  * @details 逻辑块号的值是相对于文件系统的起始位置，下面的 inode 和起始数据块同理。
@@ -114,6 +120,11 @@ struct NvmixInode
      */
     unsigned short m_dataBlockIndex;
 };
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

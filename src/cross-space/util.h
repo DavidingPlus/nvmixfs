@@ -11,6 +11,13 @@
 #ifndef _NVMIX_UTIL_H_
 #define _NVMIX_UTIL_H_
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
 #include "defs.h"
 
 
@@ -22,6 +29,11 @@
 // blkcnt_t（返回值） == unsigned long long
 // loff_t（参数） == long long
 unsigned long long nvmixCalcInodeBlocks(long long size);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

@@ -44,5 +44,9 @@ int nvmixWriteInode(struct inode *, struct writeback_control *);
 
 struct inode *nvmixIget(struct super_block *, unsigned long);
 
+// 通过 inode 对应目录项的大小转化为 inode->i_blocks 的值，注意 inode->i_blocks 以 512 B 为单位。
+// TODO 这个函数只是一个工具函数，按理来讲不应该放在头文件中暴露给用户，而应该在源文件中定义为 static。但我想在用户态进行单元测试，目前必须暴露出来。后续思考如何更好的解决这个问题。
+blkcnt_t nvmixCalcInodeBlocks(loff_t);
+
 
 #endif

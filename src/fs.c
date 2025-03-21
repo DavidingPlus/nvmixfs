@@ -46,10 +46,6 @@ extern struct inode_operations nvmixFileInodeOps;
 extern struct inode_operations nvmixDirInodeOps;
 
 
-// 通过 inode 对应目录项的大小转化为 inode->i_blocks 的值，注意 inode->i_blocks 以 512 B 为单位。
-static inline blkcnt_t calcInodeBlocks(loff_t);
-
-
 struct dentry *nvmixMount(struct file_system_type *pFileSystemType, int flags, const char *pDevName, void *pData)
 {
     struct dentry *res = NULL;
@@ -225,6 +221,9 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
 
         iget_failed(pInode);
 
+        brelse(pBh);
+        pBh = NULL;
+
 
         return NULL;
     }
@@ -241,7 +240,7 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
 
     // 封装了一个函数专门计算 i_blocks。
     // 但由于目前本文件系统限制了文件的最大大小为一个块，即 4 KIB，因此这个值不是 0 就是 1。这样为以后的改造留出了口子。
-    pInode->i_blocks = calcInodeBlocks(pInode->i_size);
+    pInode->i_blocks = nvmixCalcInodeBlocks(pInode->i_size);
 
     // 填充 page cache 相关的 address_space_operations。
     pInode->i_mapping->a_ops = &nvmixAops;
@@ -281,7 +280,7 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
 }
 
 
-blkcnt_t calcInodeBlocks(loff_t size)
+blkcnt_t nvmixCalcInodeBlocks(loff_t size)
 {
     if (0 == size) return (blkcnt_t)0;
 

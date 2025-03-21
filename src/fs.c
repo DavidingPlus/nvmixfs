@@ -11,6 +11,7 @@
 
 #include "inode.h"
 #include "defs.h"
+#include "util.h"
 
 #include <linux/fs.h>
 #include <linux/export.h>
@@ -277,13 +278,4 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
 
 
     return pInode;
-}
-
-
-blkcnt_t nvmixCalcInodeBlocks(loff_t size)
-{
-    if (0 == size) return (blkcnt_t)0;
-
-
-    return (blkcnt_t)DIV_ROUND_UP(size, NVMIX_BLOCK_SIZE) * (NVMIX_BLOCK_SIZE / 512);
 }

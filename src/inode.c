@@ -30,6 +30,8 @@ struct inode_operations nvmixFileInodeOps = {
 // 由进程打开的文件（用 file 结构描述）的操作接口。
 extern struct file_operations nvmixFileOps;
 
+extern struct address_space_operations nvmixAops;
+
 
 // 静态函数只能被当前源文件使用，类似于 C++ 类中的私有成员函数。不建议声明在头文件中，因为头文件可能被其他文件包含，可能会出现未知问题，同时可能也会降低链接速度。
 static inline struct inode *nvmixNewInode(struct inode *);
@@ -102,8 +104,11 @@ int nvmixCreate(struct inode *pParentDirInode, struct dentry *pDentry, umode_t m
     }
 
     pInode->i_mode = mode;
+
+    // 参考 ext4_create()，对这些操作做了注册。
     pInode->i_op = &nvmixFileInodeOps;
     pInode->i_fop = &nvmixFileOps;
+    pInode->i_mapping->a_ops = &nvmixAops;
 
     pNih = NVMIX_I(pInode);
     pNih->m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + pInode->i_ino;

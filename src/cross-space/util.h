@@ -20,8 +20,8 @@ NVMIX_EXTERN_C_BEGIN
 
 /**
  * @brief 整除并且向上取整。
- * @param n 被除数
- * @param d 除数
+ * @param n 被除数。
+ * @param d 除数。
  * @return 计算结果，向上取整的 n / d。
  * @details 此宏同内核宏 NVMIX_DIV_ROUND_UP，仅作复制粘贴。
  */
@@ -30,7 +30,7 @@ NVMIX_EXTERN_C_BEGIN
 
 /**
  * @brief 根据文件大小计算占据 inode 中 i_blocks 的值。
- * @param size 文件大小
+ * @param size 文件大小。
  * @return 占用的磁盘块数（以 512 B 为单位）。
  * @details 通过 inode 对应文件的大小转化为 inode->i_blocks 的值，注意 inode->i_blocks 以 512 B 为单位。
  * typedef u64 blkcnt_t; typedef __u64 u64; typedef unsigned long long __u64;

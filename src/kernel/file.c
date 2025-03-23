@@ -1,7 +1,7 @@
 /**
  * @file file.c
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief file 结构源文件。
+ * @brief 进程打开的文件操作的源文件。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *
@@ -12,7 +12,9 @@
 #include <linux/fs.h>
 
 
-// 由进程打开的文件（用 file 结构描述）的操作接口。
+/**
+ * @brief 由进程打开的文件（用 file 结构描述）的操作接口。
+ */
 struct file_operations nvmixFileFileOps = {
     .owner = THIS_MODULE,
     .open = generic_file_open,

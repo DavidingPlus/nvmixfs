@@ -75,3 +75,13 @@ jobs:
           export XMAKE_ROOT=y
 
           xmake build
+
+      - name: Build Target mkfs.nvmixfs
+        working-directory: ${{github.workspace}}
+        run: |
+
+          alias xmake="~/.local/bin/xmake"
+          export XMAKE_ROOT=y
+
+          touch snippet/MkfsNvmixfs/.buildme
+          xmake build mkfs.nvmixfs

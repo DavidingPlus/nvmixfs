@@ -1,9 +1,11 @@
-name: Run Unit Test
+name: Unit Test
 
 on:
   push:
     branches:
       - "**"
+    tags:
+      - "v*"
   workflow_dispatch:
 
 jobs:

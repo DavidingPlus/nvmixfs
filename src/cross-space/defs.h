@@ -105,7 +105,7 @@ struct NvmixSuperBlock
 
     /**
      * @brief 管理 inode 分配状态的位图信息。
-     * @details unsigned long 类型 32 位，与 NVMIX_MAX_INODE_NUM（32）刚好对应。每一位代表一个 inode 的分配信息。
+     * @details unsigned long 类型是 8 个字节，64 位。囊括了 NVMIX_MAX_INODE_NUM 的 32 位。低 32 位的每一位代表一个 inode 的分配信息。
      */
     unsigned long m_imap;
 

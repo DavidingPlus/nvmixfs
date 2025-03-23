@@ -17,9 +17,9 @@ TEST(VersionTest, Test1)
 
 TEST(VersionTest, Test2)
 {
-    char major = '0' + NVMIX_CONFIG_VERSION_MAJOR;
-    char minor = '0' + NVMIX_CONFIG_VERSION_MINOR;
-    char alter = '0' + NVMIX_CONFIG_VERSION_ALTER;
+    unsigned char major = '0' + NVMIX_CONFIG_VERSION_MAJOR;
+    unsigned char minor = '0' + NVMIX_CONFIG_VERSION_MINOR;
+    unsigned char alter = '0' + NVMIX_CONFIG_VERSION_ALTER;
 
     std::string version;
 

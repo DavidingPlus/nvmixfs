@@ -1,7 +1,7 @@
 /**
  * @file page.h
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief page cache 结构头文件。
+ * @brief 页面缓存操作的头文件。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *

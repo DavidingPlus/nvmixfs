@@ -5,7 +5,8 @@
 
 TEST(DefsTest, SuperBlockTest)
 {
-    // TODO 测试 super_block 区会不会溢出。
+    EXPECT_EQ(sizeof(struct NvmixSuperBlock), 24);
+    EXPECT_TRUE(sizeof(struct NvmixSuperBlock) < 4096);
 }
 
 TEST(DefsTest, InodeTest)

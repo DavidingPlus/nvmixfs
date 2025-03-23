@@ -5,7 +5,11 @@
 
 int main()
 {
-    // TODO 测试 super_block 区会不会溢出。
+    // 测试 super_block 区会不会溢出。
+    std::cout << sizeof(struct NvmixSuperBlock) << std::endl;          // 24
+    std::cout << (sizeof(struct NvmixSuperBlock) < 4096) << std::endl; // 1, true
+
+    std::cout << std::endl;
 
     // 测试 inode 区会不会溢出。
     std::cout << sizeof(struct NvmixInode) << std::endl;                                // 20

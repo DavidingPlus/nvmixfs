@@ -2,6 +2,9 @@ option ("linux-headers", {showmenu = true, description = "Set linux-headers path
 option ("with-gtest", {showmenu = true, description = "Whether to enable unit test by GTest.", default = false})
 
 
+add_defines ("NVMIX_VERSION_STRING=\"1.0.0\"")
+
+
 add_includedirs ("src/cross-space/")
 add_includedirs ("src/kernel/")
 

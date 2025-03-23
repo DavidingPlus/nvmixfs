@@ -12,7 +12,7 @@
 #include <linux/module.h>
 
 
-MODULE_VERSION("1.0.0");
+MODULE_VERSION(NVMIX_VERSION_STRING);
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("DavidingPlus");
 MODULE_DESCRIPTION("A Simple FileSystem");

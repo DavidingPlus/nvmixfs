@@ -82,11 +82,61 @@ void nvmixKillSb(struct super_block *pSuperBlock)
     pr_info("nvmixfs: unmounted disk successfully.\n");
 }
 
+// fill_super() 是 Linux 内核文件系统模块中用于初始化超级块的核心函数，用于将磁盘上的我们设计的文件系统元数据加载到内存中，并建立文件系统的基本结构，使内核能够识别和管理该文件系统。
 int nvmixFillSuper(struct super_block *pSuperBlock, void *pData, int silent)
 {
+    struct NvmixSuperBlockHelper *pNsbh = NULL;
+    struct buffer_head *pBh = NULL;
+    int res = 0;
+
+    // 为辅助结构 NvmixSuperBlockHelper 分配内存。
+    pNsbh = kzalloc(sizeof(struct NvmixSuperBlockHelper), GFP_KERNEL);
+    if (!pNsbh)
+    {
+        pr_err("nvmixfs: failed to allocate super block.\n");
+
+        kzfree(pNsbh);
+        pNsbh = NULL;
+
+        res = -ENOMEM;
+        goto ERR;
+    }
+    // 将其设置为文件系统的私有数据。
+    pSuperBlock->s_fs_info = pNsbh;
+
+    // 设置文件系统的逻辑块大小，这是初始化超级块的第一步，后续的操作都依赖于正确的文件系统逻辑块大小（这里是 4 KIB）。
+    // 返回 0 表示设置失败。
+    if (0 == sb_set_blocksize(pSuperBlock, NVMIX_BLOCK_SIZE))
+    {
+        pr_err("nvmixfs: bad block size when setting.\n");
+
+        kzfree(pNsbh);
+        pNsbh = NULL;
+
+        res = -EINVAL;
+        goto ERR;
+    }
+
+    // 读取磁盘上的超级块区到缓存中。
+    pBh = sb_bread(pSuperBlock, NVMIX_SUPER_BLOCK_INDEX);
+    if (!pBh)
+    {
+        pr_err("nvmixfs: could not read super block.\n");
+
+        brelse(pBh);
+        pBh = NULL;
+
+        res = -ENOMEM;
+        goto ERR;
+    }
+
     // TODO
 
-    return 0;
+
+ERR:
+
+
+    return res;
 }
 
 void nvmixPutSuper(struct super_block *pSb)
@@ -116,6 +166,9 @@ struct inode *nvmixAllocInode(struct super_block *pSb)
     {
         pr_err("nvmixfs: failed to allocate inode.\n");
 
+        kzfree(pNih);
+        pNih = NULL;
+
 
         return NULL;
     }
@@ -133,6 +186,7 @@ void nvmixDestroyInode(struct inode *pInode)
 {
     // kfree() 是内核用于释放动态分配内存的函数。释放由 kmalloc()、kzalloc()、kmem_cache_alloc() 等内核内存分配函数申请的内存。
     // kzfree() 的区别是先清 0 再释放内存，避免敏感内存内容的残留。
+    // 如果传入的指针是 NULL, kzfree() 什么都不会做。
     // 当前版本内核为 5.4，5.15 中 kzfree() 接口已废弃，转而使用 kfree_sensitive()。
     kzfree(NVMIX_I(pInode));
 

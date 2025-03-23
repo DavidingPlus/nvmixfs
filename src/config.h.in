@@ -24,5 +24,6 @@
 
 /**
  * @brief 修订版本号。
+ * @details patch 和 alter 均可。Linux 内核的习惯是 patch，这里顺从 XMake 内置变量命名规则，即 alter。
  */
 #define NVMIX_CONFIG_VERSION_ALTER ${VERSION_ALTER}

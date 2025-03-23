@@ -68,6 +68,29 @@ NVMIX_EXTERN_C_BEGIN
 
 
 /**
+ * @struct NvmixVersion
+ * @brief 描述文件系统的版本号。
+ */
+struct NvmixVersion
+{
+    /**
+     * @brief 主版本号。
+     * @details unsigned char 类型是 1 个字节，8 位。能表示的数的范围是 0 到 255（2 的 8 次方 - 1）。表示版本完全够用。
+     */
+    unsigned char m_major;
+
+    /**
+     * @brief 次版本号。
+     */
+    unsigned char m_minor;
+
+    /**
+     * @brief 修订版本号。
+     */
+    unsigned char m_alter;
+};
+
+/**
  * @struct NvmixSuperBlock
  * @brief 定义了文件系统在磁盘上的超级块布局，用于持久化存储文件系统元数据。
  * @todo 目前 NvmixSuperBlock 结构体占据的空间远小于 4 KIB，但仍需要使用一个 4 KIB 的逻辑块（文件系统必须以一定大小的块为单位），可能存在空间浪费的问题。目前暂不做优化。未使用空间用作保留，便于未来扩展。
@@ -88,9 +111,8 @@ struct NvmixSuperBlock
 
     /**
      * @brief 文件系统的版本号。
-     * @details 主版本为高 4 位，次版本为低 4 位。
      */
-    unsigned char m_version;
+    struct NvmixVersion m_version;
 };
 
 /**

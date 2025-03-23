@@ -10,6 +10,8 @@
 #ifndef _NVMIX_FS_H_
 #define _NVMIX_FS_H_
 
+#include "defs.h"
+
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
 
@@ -31,7 +33,7 @@ struct NvmixSuperBlockHelper
     /**
      * @brief 文件系统的版本号。
      */
-    unsigned char m_version;
+    struct NvmixVersion m_version;
 };
 
 

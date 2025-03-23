@@ -1,5 +1,5 @@
 -- conan needs pip(by apt) and cmake(by snap recommended)
-add_requires("conan::gtest 1.12.1", {alias = "gtest"})
+add_requires ("conan::gtest 1.12.1", {alias = "gtest"})
 
 
 target("tests")

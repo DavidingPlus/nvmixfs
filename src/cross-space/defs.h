@@ -56,27 +56,30 @@ NVMIX_EXTERN_C_BEGIN
 #define NVMIX_MAX_NAME_LENGTH 16
 
 
+/**
+ * @struct NvmixSuperBlock
+ * @brief 本文件系统超级块的元数据信息。
+ * @details 该结构体定义了文件系统在磁盘上的超级块布局，用于持久化存储文件系统元数据。结构体总大小应严格等于文件系统块大小（如本文件系统 4 KIB），未使用空间保留用于未来扩展。
+ */
 struct NvmixSuperBlock
 {
-    // TODO
-};
-
-/**
- * @struct NvmixDentry
- * @brief 目录项的元数据信息。
- * @details 目录项指目录下的文件或子目录（包括 . 和 ..）。本结构类似 vfs 的 dentry 结构的作用，将 inode 和 目录项的名字关联在一起。
- */
-struct NvmixDentry
-{
     /**
-     * @brief 目录项的名字。
+     * @brief 文件系统的标识魔数。
+     * @details 用于标识文件系统类型。加载文件系统时需校验此值，防止误挂载其他文件系统，如 EXT4 魔数为 0xEF53。
      */
-    char m_name[NVMIX_MAX_NAME_LENGTH];
+    unsigned long m_magic;
 
     /**
-     * @brief 目录项在 vfs 中全局唯一的 inode 号。
+     * @brief 管理 inode 分配状态的位图信息。
+     * @details unsigned long 类型 32 位，与 NVMIX_MAX_INODE_NUM（32）刚好对应。每一位代表一个 inode 的分配信息。
      */
-    unsigned long m_ino;
+    unsigned long m_imap;
+
+    /**
+     * @brief 文件系统的版本号。
+     * @details 主版本为高 4 位，次版本为低 4 位。
+     */
+    unsigned char m_version;
 };
 
 /**
@@ -118,6 +121,24 @@ struct NvmixInode
      * @brief 文件或目录对应的数据块的逻辑块号。
      */
     unsigned short m_dataBlockIndex;
+};
+
+/**
+ * @struct NvmixDentry
+ * @brief 目录对应的数据块的各条目录项的信息。
+ * @details 目录项指目录下的文件或子目录（包括 . 和 ..）。本结构类似 vfs 的 dentry 结构的作用，将 inode 和 目录项的名字关联在一起。目录的数据块存储的就是 NvmixDentry[] 数组，记录该目录下所有目录项的信息。
+ */
+struct NvmixDentry
+{
+    /**
+     * @brief 目录项的名字。
+     */
+    char m_name[NVMIX_MAX_NAME_LENGTH];
+
+    /**
+     * @brief 目录项在 vfs 中全局唯一的 inode 号。
+     */
+    unsigned long m_ino;
 };
 
 

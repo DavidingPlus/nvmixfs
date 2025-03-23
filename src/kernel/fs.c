@@ -72,18 +72,18 @@ struct dentry *nvmixMount(struct file_system_type *pFileSystemType, int flags, c
     return res;
 }
 
-void nvmixKillSb(struct super_block *pSuperBlock)
+void nvmixKillSb(struct super_block *pSb)
 {
     // kill_block_super()：卸载块设备上的文件系统。
     // kill_anon_super()：卸载虚拟文件系统（当请求时生成信息）。
     // kill_litter_super()：卸载不在物理设备上的文件系统（信息保存在内存中）。
-    kill_block_super(pSuperBlock);
+    kill_block_super(pSb);
 
     pr_info("nvmixfs: unmounted disk successfully.\n");
 }
 
 // fill_super() 是 Linux 内核文件系统模块中用于初始化超级块的核心函数，用于将磁盘上的我们设计的文件系统元数据加载到内存中，并建立文件系统的基本结构，使内核能够识别和管理该文件系统。
-int nvmixFillSuper(struct super_block *pSuperBlock, void *pData, int silent)
+int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
 {
     struct NvmixSuperBlockHelper *pNsbh = NULL;
     struct buffer_head *pBh = NULL;
@@ -102,11 +102,11 @@ int nvmixFillSuper(struct super_block *pSuperBlock, void *pData, int silent)
         goto ERR;
     }
     // 将其设置为文件系统的私有数据。
-    pSuperBlock->s_fs_info = pNsbh;
+    pSb->s_fs_info = pNsbh;
 
     // 设置文件系统的逻辑块大小，这是初始化超级块的第一步，后续的操作都依赖于正确的文件系统逻辑块大小（这里是 4 KIB）。
     // 返回 0 表示设置失败。
-    if (0 == sb_set_blocksize(pSuperBlock, NVMIX_BLOCK_SIZE))
+    if (0 == sb_set_blocksize(pSb, NVMIX_BLOCK_SIZE))
     {
         pr_err("nvmixfs: bad block size when setting.\n");
 
@@ -118,7 +118,7 @@ int nvmixFillSuper(struct super_block *pSuperBlock, void *pData, int silent)
     }
 
     // 读取磁盘上的超级块区到缓存中。
-    pBh = sb_bread(pSuperBlock, NVMIX_SUPER_BLOCK_INDEX);
+    pBh = sb_bread(pSb, NVMIX_SUPER_BLOCK_INDEX);
     if (!pBh)
     {
         pr_err("nvmixfs: could not read super block.\n");

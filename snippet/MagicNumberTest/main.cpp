@@ -4,15 +4,15 @@
 #include "defs.h"
 
 
-std::string hexToString(uint64_t hexValue)
+std::string hexAsciiToString(uint64_t val)
 {
     std::string res;
 
     bool leadingZero = true; // 用于跳过高位的 0
 
-    for (int i = (sizeof(hexValue) - 1) * 8; i >= 0; i -= 8)
+    for (int i = (sizeof(val) - 1) * 8; i >= 0; i -= 8)
     {
-        char c = (hexValue >> i) & 0xFF;
+        char c = (val >> i) & 0xFF;
 
         if (c == '\0' && leadingZero) continue; // 跳过前导零
 
@@ -30,11 +30,11 @@ std::string hexToString(uint64_t hexValue)
 
 int main()
 {
-    std::string s = hexToString(0x68656C6C6F);
+    std::string s = hexAsciiToString(0x68656C6C6F);
     std::cout << s << std::endl;              // hello
     std::cout << (s == "hello") << std::endl; // hello
 
-    s = hexToString(NVMIX_MAGIC_NUMBER);
+    s = hexAsciiToString(NVMIX_MAGIC_NUMBER);
     std::cout << s << std::endl;              // nvmix
     std::cout << (s == "nvmix") << std::endl; // nvmix
 

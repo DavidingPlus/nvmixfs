@@ -1,8 +1,8 @@
 /**
  * @file defs.h
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief 定义本文件系统的元数据的头文件。
- * @details 本文件定义了本文件系统必要的元数据，需要存储在磁盘上。注意与内存中 vfs 的数据结构区分开来，此文件的数据结构是本文件系统自己定义并且维护的。本文件需要被用户层程序 MkfsApp 引用，因此文件中不能放置任何内核 vfs 的数据结构或类型，例如 struct inode、struct buffer_head 等。但在实际过程中本文件系统的元数据结构显然是需要与 vfs 的数据结构打交道的，因此设计了辅助结构 NvmixSuperBlockHelper 和 NvmixInodeHelper 等。
+ * @brief 本文件系统的全局宏和数据结构的头文件。
+ * @details 本文件定义了本文件系统必要的元数据，需要存储在磁盘上。注意与内存中 vfs 的数据结构区分开来，此文件的数据结构是本文件系统自己设计并且维护的。本文件需要被用户层程序 MkfsNvmixfs 引用，因此文件中不能放置任何内核 vfs 的数据结构或类型，例如 struct inode、struct buffer_head 等。但在实际过程中本文件系统的元数据结构显然是需要与 vfs 的数据结构打交道的，因此设计了辅助结构 NvmixSuperBlockHelper 和 NvmixInodeHelper 等。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *
@@ -19,7 +19,7 @@ NVMIX_EXTERN_C_BEGIN
 
 /**
  * @brief 文件系统的魔数。
- * @details 此十六进制数是 nvmix 的 ASCII 编码表示，用于唯一标识此文件系统。
+ * @details 此十六进制数是 nvmix 的 ASCII 编码表示，用于唯一标识本文件系统。
  */
 #define NVMIX_MAGIC_NUMBER 0x6E766d6978
 

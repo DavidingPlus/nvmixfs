@@ -18,6 +18,12 @@ NVMIX_EXTERN_C_BEGIN
 
 
 /**
+ * @brief 文件系统的魔数。
+ * @details 此十六进制数是 nvmix 的 ASCII 编码表示，用于唯一标识此文件系统。
+ */
+#define NVMIX_MAGIC_NUMBER 0x6E766d6978
+
+/**
  * @brief 超级块的逻辑块号。
  * @details 逻辑块号的值是相对于文件系统的起始位置，下面的 inode 和起始数据块同理。
  */

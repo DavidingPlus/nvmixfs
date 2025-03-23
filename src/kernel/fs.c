@@ -87,6 +87,7 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
 {
     struct NvmixSuperBlockHelper *pNsbh = NULL;
     struct buffer_head *pBh = NULL;
+    struct NvmixSuperBlock *pNsb = NULL;
     int res = 0;
 
     // 为辅助结构 NvmixSuperBlockHelper 分配内存。
@@ -117,7 +118,7 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
         goto ERR;
     }
 
-    // 读取磁盘上的超级块区到缓存中。
+    // 读取磁盘上的超级块区的数据。
     pBh = sb_bread(pSb, NVMIX_SUPER_BLOCK_INDEX);
     if (!pBh)
     {
@@ -129,6 +130,27 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
         res = -ENOMEM;
         goto ERR;
     }
+    pNsb = (struct NvmixSuperBlock *)(pBh->b_data);
+
+    // 校验魔数。
+    if (NVMIX_MAGIC_NUMBER != pNsb->m_magic)
+    {
+        pr_err("nvmixfs: wrong magic number.\n");
+
+        brelse(pBh);
+        pBh = NULL;
+
+        res = -EINVAL;
+        goto ERR;
+    }
+
+    // 填充 vfs super_block 结构的相关信息。
+    pSb->s_magic = NVMIX_MAGIC_NUMBER;
+    pSb->s_op = &nvmixSuperOps;
+
+    // 磁盘上的 NvmixSuperBlock 元数据向内存辅助结构 NvmixSuperBlockHelper 传递信息。
+    pNsbh->m_imap = pNsb->m_imap;
+    pNsbh->m_version = pNsbh->m_version;
 
     // TODO
 

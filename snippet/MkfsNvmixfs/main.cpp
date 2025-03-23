@@ -34,9 +34,9 @@ int main(int argc, char const *argv[])
 
     memset(&msb, 0, sizeof(struct NvmixSuperBlock));
 
-    msb.magic = NVMIX_MAGIC;
-    msb.version = 1;
-    msb.imap = 0x03;
+    msb.m_magic = NVMIX_MAGIC_NUMBER;
+    msb.m_version = 1;
+    msb.m_imap = 0x03;
 
     /* zero disk  */
     memset(buffer, 0, NVMIX_BLOCK_SIZE);
@@ -49,28 +49,28 @@ int main(int argc, char const *argv[])
 
     /* initialize root inode */
     memset(&rootInode, 0, sizeof(rootInode));
-    rootInode.uid = 0;
-    rootInode.gid = 0;
-    rootInode.mode = S_IFDIR | 0755;
-    rootInode.size = 0;
-    rootInode.data_block = NVMIX_FIRST_DATA_BLOCK_INDEX;
+    rootInode.m_uid = 0;
+    rootInode.m_gid = 0;
+    rootInode.m_mode = S_IFDIR | 0755;
+    rootInode.m_size = 0;
+    rootInode.m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX;
 
     fseek(file, NVMIX_INODE_BLOCK_INDEX * NVMIX_BLOCK_SIZE, SEEK_SET);
     fwrite(&rootInode, sizeof(rootInode), 1, file);
 
     /* initialize new inode */
     memset(&fileInode, 0, sizeof(fileInode));
-    fileInode.uid = 0;
-    fileInode.gid = 0;
-    fileInode.mode = S_IFREG | 0644;
-    fileInode.size = 0;
-    fileInode.data_block = NVMIX_FIRST_DATA_BLOCK_INDEX + 1;
+    fileInode.m_uid = 0;
+    fileInode.m_gid = 0;
+    fileInode.m_mode = S_IFREG | 0644;
+    fileInode.m_size = 0;
+    fileInode.m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + 1;
     fwrite(&fileInode, sizeof(fileInode), 1, file);
 
     /* add dentry information */
     memset(&fileDentry, 0, sizeof(fileDentry));
-    fileDentry.ino = 1;
-    memcpy(fileDentry.name, "a.txt", 5);
+    fileDentry.m_ino = 1;
+    memcpy(fileDentry.m_name, "a.txt", 5);
     fseek(file, NVMIX_FIRST_DATA_BLOCK_INDEX * NVMIX_BLOCK_SIZE, SEEK_SET);
     fwrite(&fileDentry, sizeof(fileDentry), 1, file);
 

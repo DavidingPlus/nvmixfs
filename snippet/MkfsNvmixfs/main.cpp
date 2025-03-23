@@ -4,6 +4,8 @@
 #include <sys/stat.h>
 #include <linux/types.h>
 
+#include "config.h"
+
 #include "defs.h"
 
 
@@ -35,7 +37,11 @@ int main(int argc, char const *argv[])
     memset(&msb, 0, sizeof(struct NvmixSuperBlock));
 
     msb.m_magic = NVMIX_MAGIC_NUMBER;
-    msb.m_version = 1;
+
+    msb.m_version.m_major = NVMIX_CONFIG_VERSION_MAJOR;
+    msb.m_version.m_minor = NVMIX_CONFIG_VERSION_MINOR;
+    msb.m_version.m_alter = NVMIX_CONFIG_VERSION_ALTER;
+
     msb.m_imap = 0x03;
 
     /* zero disk  */

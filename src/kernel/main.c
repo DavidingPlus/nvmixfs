@@ -11,8 +11,10 @@
 #include <linux/init.h>
 #include <linux/module.h>
 
+#include "config.h"
 
-MODULE_VERSION("1.0.0");
+
+MODULE_VERSION(NVMIX_CONFIG_VERSION);
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("DavidingPlus");
 MODULE_DESCRIPTION("A Simple FileSystem");

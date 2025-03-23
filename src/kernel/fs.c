@@ -141,7 +141,10 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
 
     // 磁盘上的 NvmixSuperBlock 元数据向内存辅助结构 NvmixSuperBlockHelper 传递信息。
     pNsbh->m_imap = pNsb->m_imap;
-    pNsbh->m_version = pNsb->m_version;
+
+    pNsbh->m_version.m_major = pNsb->m_version.m_major;
+    pNsbh->m_version.m_minor = pNsb->m_version.m_minor;
+    pNsbh->m_version.m_alter = pNsb->m_version.m_alter;
 
     // 分配根目录的 inode 和 dentry。
     pRootDirInode = nvmixIget(pSb, NVMIX_ROOT_DIR_INODE_NUMBER);

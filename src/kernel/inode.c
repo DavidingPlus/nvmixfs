@@ -152,7 +152,7 @@ struct inode *nvmixNewInode(struct inode *pParentDirInode)
     pSb = pParentDirInode->i_sb;
     pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info); // 含义解释见 fs.c。
 
-    // find_first_zero_bit() 是内核提供的一个位图操作函数，其作用是从给定的位图中查找第一个值为 0 的位，即未使用的空闲资源。m_imap 是我们自己定义的管理 inode 分配状态的位图信息，类型是 unsigned long，刚好 4 个字节，32 位。每一位用于标识分配状态。
+    // find_first_zero_bit() 是内核提供的一个位图操作函数，其作用是从给定的位图中查找第一个值为 0 的位，即未使用的空闲资源。m_imap 是我们自己定义的管理 inode 分配状态的位图信息，类型是 unsigned long，8 个字节，64 位。对本文件系统而言，使用低 32 位，每一位用于标识分配状态。
     index = find_first_zero_bit(&pNsbh->m_imap, NVMIX_MAX_INODE_NUM);
     if (NVMIX_MAX_INODE_NUM == index)
     {

@@ -10,6 +10,7 @@ set_configdir ("$(buildir)/config")
 add_configfiles ("src/config.h.in")
 
 add_includedirs ("$(buildir)/config/")
+add_includedirs ("src/")
 add_includedirs ("src/cross-space/")
 add_includedirs ("src/kernel/")
 

@@ -2,6 +2,7 @@ option ("linux-headers", {showmenu = true, description = "Set linux-headers path
 option ("with-gtest", {showmenu = true, description = "Whether to enable unit test by GTest.", default = false})
 
 
+add_includedirs ("src/")
 add_includedirs ("src/cross-space/")
 add_includedirs ("src/kernel/")
 

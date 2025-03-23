@@ -88,6 +88,8 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     struct NvmixSuperBlockHelper *pNsbh = NULL;
     struct buffer_head *pBh = NULL;
     struct NvmixSuperBlock *pNsb = NULL;
+    struct inode *pRootDirInode = NULL;
+    struct dentry *pRootDirDentry = NULL;
     int res = 0;
 
     // 为辅助结构 NvmixSuperBlockHelper 分配内存。
@@ -96,23 +98,17 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     {
         pr_err("nvmixfs: failed to allocate super block.\n");
 
-        kzfree(pNsbh);
-        pNsbh = NULL;
-
         res = -ENOMEM;
         goto ERR;
     }
-    // 将其设置为文件系统的私有数据。
+    // 将其设置为 vfs super_block 的私有数据。
     pSb->s_fs_info = pNsbh;
 
     // 设置文件系统的逻辑块大小，这是初始化超级块的第一步，后续的操作都依赖于正确的文件系统逻辑块大小（这里是 4 KIB）。
     // 返回 0 表示设置失败。
     if (0 == sb_set_blocksize(pSb, NVMIX_BLOCK_SIZE))
     {
-        pr_err("nvmixfs: bad block size when setting.\n");
-
-        kzfree(pNsbh);
-        pNsbh = NULL;
+        pr_err("nvmixfs: bad block size when running function sb_set_blocksize().\n");
 
         res = -EINVAL;
         goto ERR;
@@ -124,9 +120,6 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     {
         pr_err("nvmixfs: could not read super block.\n");
 
-        brelse(pBh);
-        pBh = NULL;
-
         res = -ENOMEM;
         goto ERR;
     }
@@ -135,10 +128,7 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     // 校验魔数。
     if (NVMIX_MAGIC_NUMBER != pNsb->m_magic)
     {
-        pr_err("nvmixfs: wrong magic number.\n");
-
-        brelse(pBh);
-        pBh = NULL;
+        pr_err("nvmixfs: wrong nvmix magic number.\n");
 
         res = -EINVAL;
         goto ERR;
@@ -150,12 +140,49 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
 
     // 磁盘上的 NvmixSuperBlock 元数据向内存辅助结构 NvmixSuperBlockHelper 传递信息。
     pNsbh->m_imap = pNsb->m_imap;
-    pNsbh->m_version = pNsbh->m_version;
+    pNsbh->m_version = pNsb->m_version;
 
-    // TODO
+    // 分配根目录的 inode 和 dentry。
+    pRootDirInode = nvmixIget(pSb, NVMIX_ROOT_DIR_INODE_NUMBER);
+    if (!pRootDirInode)
+    {
+        pr_err("nvmixfs: bad inode number.\n");
+
+        res = -EINVAL;
+        goto ERR;
+    }
+
+    pRootDirDentry = d_make_root(pRootDirInode);
+    if (!pRootDirDentry)
+    {
+        pr_err("nvmixfs: error when running function d_make_root().\n");
+
+        // iput() 是 Linux 内核中的一个函数，用于释放对 inode 的引用。
+        // 在初始化根目录失败时（如 d_make_root() 失败），需手动调用 iput() 释放通过 nvmixIget() 获取的根 inode 的引用。
+        iput(pRootDirInode);
+
+        res = -EINVAL;
+        goto ERR;
+    }
+    pSb->s_root = pRootDirDentry;
+
+    // 将超级块缓冲区指针传递给 NvmixSuperBlockHelper 存储起来，后续的很多操作都需要更新磁盘超级块的元数据内容。
+    // 注意，既然传递指针存储起来了，那么正常流程下是不能使用 brelse() 释放 pBh 的。
+    pNsbh->m_pBh = pBh;
 
 
+    return res;
+
+
+    // 错误流程分支，正常流程走不到这里，于上面已退出。
 ERR:
+    brelse(pBh);
+    pBh = NULL;
+
+    pSb->s_fs_info = NULL;
+
+    kzfree(pNsbh);
+    pNsbh = NULL;
 
 
     return res;

@@ -24,6 +24,11 @@ NVMIX_EXTERN_C_BEGIN
 #define NVMIX_MAGIC_NUMBER 0x6E766d6978
 
 /**
+ * @brief 根目录的 inode 号。
+ */
+#define NVMIX_ROOT_DIR_INODE_NUMBER 0
+
+/**
  * @brief 超级块的逻辑块号。
  * @details 逻辑块号的值是相对于文件系统的起始位置，下面的 inode 和起始数据块同理。
  */

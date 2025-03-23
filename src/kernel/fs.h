@@ -16,6 +16,10 @@
 
 struct NvmixSuperBlockHelper
 {
+    /**
+     * @brief 磁盘上超级块区的缓冲区指针。
+     * @details 这个指针在 fill_super() 函数中被初始化，然后就没有释放过。记录这个指针是为了在操作文件系统的时候能够及时更新超级块区的信息。这是不可避免的。
+     */
     struct buffer_head *m_pBh;
 
     /**
@@ -24,6 +28,9 @@ struct NvmixSuperBlockHelper
      */
     unsigned long m_imap;
 
+    /**
+     * @brief 文件系统的版本号。
+     */
     unsigned char m_version;
 };
 

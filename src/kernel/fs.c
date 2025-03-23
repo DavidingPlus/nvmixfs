@@ -83,6 +83,7 @@ void nvmixKillSb(struct super_block *pSb)
 }
 
 // fill_super() 是 Linux 内核文件系统模块中用于初始化超级块的核心函数，用于将磁盘上的我们设计的文件系统元数据加载到内存中，并建立文件系统的基本结构，使内核能够识别和管理该文件系统。
+// 在代码中，我发现元数据都是从磁盘上读取来的，并没有发现第一次初始化数据的过程，这是为什么呢？明确 fill_super() 的语义是将磁盘上我们设计的文件系统元数据加载并初始化文件系统，它不负责第一次初始化磁盘上数据的过程。整个文件系统除了这个内核模块还有 mkfs.nvmixfs 这个用户层程序，它负责格式化文件系统并第一次初始化数据。
 int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
 {
     struct NvmixSuperBlockHelper *pNsbh = NULL;

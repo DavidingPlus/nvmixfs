@@ -21,4 +21,5 @@ struct file_operations nvmixFileFileOps = {
     .write_iter = generic_file_write_iter,
     .mmap = generic_file_mmap,
     .llseek = generic_file_llseek,
+    .fsync = generic_file_fsync,
 };

@@ -1,7 +1,7 @@
 /**
  * @file inode.h
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief inode 结构头文件。
+ * @brief 文件和目录的 inode 操作接口头文件。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *
@@ -41,11 +41,33 @@ struct NvmixInodeHelper
 #define NVMIX_I(pVfsInode) container_of(pVfsInode, struct NvmixInodeHelper, m_vfsInode)
 
 
-struct dentry *nvmixLookup(struct inode *, struct dentry *, unsigned int);
+/**
+ * @brief 在父目录中查找指定目录项。
+ * @param pParentDirInode 父目录的 inode 指针。
+ * @param pDentry 要查找的目录项的 dentry 指针。
+ * @param flags 标志位。
+ * @return 返回 NULL 表示成功，返回非空代表可能是一些特殊情况。
+ */
+struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry, unsigned int flags);
 
-int nvmixCreate(struct inode *, struct dentry *, umode_t, bool);
+/**
+ * @brief 在父目录中创建新文件。
+ * @param pParentDirInode 父目录的 inode 指针。
+ * @param pDentry 新创建的文件的 dentry 指针。
+ * @param mode 创建模式参数。
+ * @param excl 独占创建标志，若设置为 true 要求目标必须不存在。暂未用到。
+ * @return 成功返回 0，失败返回非 0。
+ * @details 接口的参数逆天。pParentDirInode 是父目录的 inode 节点，在函数里我需要手动创建新的 vfs inode。而 pDentry 却是新 inode 节点对应的 dentry 对象，内核帮我创建好了。很容易误解为父目录的 dentry，我们需要自己手动创建 dentry，但是内核似乎并没有这种函数。
+ */
+int nvmixCreate(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode, bool excl);
 
-int nvmixUnlink(struct inode *, struct dentry *);
+/**
+ * @brief 在父目录中删除指定文件。
+ * @param pParentDirInode 父目录的 inode 指针。
+ * @param pDentry 要删除的文件的 dentry 指针。
+ * @return 成功返回 0，失败返回非 0。
+ */
+int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry);
 
 
 #endif

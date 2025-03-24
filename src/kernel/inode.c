@@ -1,7 +1,7 @@
 /**
  * @file inode.c
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief inode 结构源文件。
+ * @brief 文件和目录的 inode 操作接口源文件。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *
@@ -16,12 +16,16 @@
 #include <linux/buffer_head.h>
 
 
-// 文件 inode 的操作接口。
+/**
+ * @brief 文件 inode 的操作接口。
+ */
 struct inode_operations nvmixFileInodeOps = {
     .getattr = simple_getattr,
 };
 
-// 目录 inode 的操作接口。
+/**
+ * @brief 目录 inode 的操作接口。
+ */
 struct inode_operations nvmixDirInodeOps = {
     .lookup = nvmixLookup,
     .create = nvmixCreate,
@@ -29,22 +33,40 @@ struct inode_operations nvmixDirInodeOps = {
     // TODO 添加创建目录 mkdir() 和删除目录 rmdir() 支持。
 };
 
-// 由进程打开的文件（用 file 结构描述）的操作接口。
 extern struct file_operations nvmixFileFileOps;
 
 extern struct address_space_operations nvmixAops;
 
 
-// static 静态函数只能被当前源文件使用，类似于 C++ 类中的私有成员函数。不建议声明在头文件中，因为头文件可能被其他文件包含，可能会出现未知问题，同时可能也会降低链接速度。
-// inline 即内联，建议放在很少行数（最好是一行）的函数使用，在调用函数的时候会类似宏一样直接展开，不用走函数调用栈，提高效率。但如果函数过长，不建议加上 inline，这样反而会导致代码冗余。
-static struct inode *nvmixNewInode(struct inode *);
+/**
+ * @brief 在父目录下创建新 inode。
+ * @param pParentDirInode 父目录的 inode 指针。
+ * @return 新 inode 的指针。
+ * @details 此函数的语义是在父目录下创建新的通用的 inode，并做基本通用项的初始化（具体见下面）。参数 struct inode* pParentDirInode 代表父目录。在 create() 语义下返回的 inode 是一个文件。创建目录有函数 mkdir()，里面也会调用此函数，在那的语义返回的 inode 就是一个目录。
+ * @details static 静态函数只能被当前源文件使用，类似于 C++ 类中的私有成员函数。不建议声明在头文件中，因为头文件可能被其他文件包含，可能会出现未知问题，同时可能也会降低链接速度。
+ * @details inline 即内联，建议放在很少行数（最好是一行）的函数使用，在调用函数的时候会类似宏一样直接展开，不用走函数调用栈，提高效率。但如果函数过长，不建议加上 inline，这样反而会导致代码冗余。
+ */
+static struct inode *nvmixNewInode(struct inode *pParentDirInode);
 
-static int nvmixAddLink(struct dentry *, struct inode *);
+/**
+ * @brief 在新创建 inode 的时候，维护父目录的目录项数组的信息。
+ * @param pDentry 新创建目录项的 dentry 指针。
+ * @param pInode 新创建目录项的 inode 的指针。
+ * @return 成功返回 0，失败返回非 0。
+ * @details 参数用新创建目录项的 dentry 而不是直接传入父目录，是因为需要目录项名称 pDentry->d_name.name。
+ */
+static int nvmixUpdateParentDirDentry(struct dentry *pDentry, struct inode *pInode);
 
-static struct NvmixDentry *nvmixFindDentry(struct dentry *, struct buffer_head **);
+/**
+ * @brief 给定目标 dentry，找到磁盘对应的 NvmixDentry 结构。
+ * @param pDentry 目标 dentry 的指针。
+ * @param ppBh 磁盘缓冲区头的二级指针。
+ * @return 成功返回目标指针，失败返回 NULL。
+ * @details 为什么会有第二个参数，且为什么是二级指针，请参考函数定义的注释。
+ */
+static struct NvmixDentry *nvmixFindDentry(struct dentry *pDentry, struct buffer_head **ppBh);
 
 
-// 接口参数含义同 nvmixCreate()。
 struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry, unsigned int flags)
 {
     struct super_block *pSb = NULL;
@@ -89,7 +111,6 @@ struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry
     return NULL;
 }
 
-// 这个接口的参数逆天。pParentDirInode 是父目录的 inode 节点，在函数里我需要手动创建新的 vfs inode。而 pDentry 却是新 inode 节点对应的 dentry 对象，内核帮我创建好了。很容易误解为父目录的 dentry，我们需要自己手动创建 dentry，但是内核似乎并没有这种函数。
 int nvmixCreate(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode, bool excl)
 {
     int res = 0;
@@ -118,7 +139,7 @@ int nvmixCreate(struct inode *pParentDirInode, struct dentry *pDentry, umode_t m
 
     // 将新 inode 关联到父目录的目录项 dentry 中，会维护并修改父目录项的一些信息。与下面的 d_instantiate() 作用不同，注意区分。
     // 注意此 pDentry 是 pInode 对应的 pDentry，而非父目录的 dentry，前面提到过。
-    res = nvmixAddLink(pDentry, pInode);
+    res = nvmixUpdateParentDirDentry(pDentry, pInode);
     if (0 != res)
     {
         // 减少 inode 的硬链接计数。
@@ -141,7 +162,6 @@ ERR:
     return res;
 }
 
-// 参数含义同样同 nvmixCreate()。
 int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
 {
     struct inode *pInode = NULL;
@@ -219,7 +239,6 @@ ERR:
 }
 
 
-// 此函数的语义是在父目录下创建新的通用的 inode，并做基本通用项的初始化（具体见下面）。参数 struct inode* pParentDirInode 代表父目录。在 create() 语义下返回的 inode 是一个文件。创建目录有函数 mkdir()，里面也会调用此函数，在那的语义返回的 inode 就是一个目录。
 struct inode *nvmixNewInode(struct inode *pParentDirInode)
 {
     struct super_block *pSb = NULL;
@@ -270,8 +289,7 @@ ERR:
     return pInode;
 }
 
-// 在 nvmixCreate() 函数中使用，将新 inode 关联到父目录的目录项 dentry（非下面的参数 pDentry） 中，维护并修改父目录项的信息。
-int nvmixAddLink(struct dentry *pDentry, struct inode *pInode)
+int nvmixUpdateParentDirDentry(struct dentry *pDentry, struct inode *pInode)
 {
     struct inode *pParentDirInode = NULL;
     struct NvmixInodeHelper *pNih = NULL;
@@ -331,7 +349,6 @@ ERR:
     return res;
 }
 
-// 通过给定目标的 vfs dentry 结构找到对应磁盘的 NvmixDentry 结构。为什么要设置参数 struct buffer_head **ppBh 看下面。
 struct NvmixDentry *nvmixFindDentry(struct dentry *pDentry, struct buffer_head **ppBh)
 {
     struct inode *pParentDirInode = NULL;

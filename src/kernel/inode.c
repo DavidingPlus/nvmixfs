@@ -25,6 +25,8 @@ struct inode_operations nvmixFileInodeOps = {
 struct inode_operations nvmixDirInodeOps = {
     .lookup = nvmixLookup,
     .create = nvmixCreate,
+    .unlink = nvmixUnlink,
+    // TODO 添加创建目录 mkdir() 和删除目录 rmdir() 支持。
 };
 
 // 由进程打开的文件（用 file 结构描述）的操作接口。
@@ -139,21 +141,100 @@ ERR:
     return res;
 }
 
+// 参数含义同样同 nvmixCreate()。
+int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
+{
+    struct inode *pInode = NULL;
+    struct NvmixInodeHelper *pNih = NULL;
+    struct buffer_head *pBh = NULL;
+    struct super_block *pSb = NULL;
+    struct NvmixDentry *pNd = NULL;
+    struct NvmixSuperBlockHelper *pNsbh = NULL;
+    struct NvmixSuperBlock *pNsb = NULL;
+    int i = 0;
+    int res = 0;
+
+
+    // vfs 部分的代码参考 simple_unlink() 的实现。
+    pInode = pDentry->d_inode;
+    // 更新时间戳。
+    pInode->i_ctime = current_time(pInode);
+    pParentDirInode->i_ctime = current_time(pInode);
+    pParentDirInode->i_mtime = current_time(pInode);
+
+    // 将磁盘上父目录的目录项数组读到缓存中。
+    pNih = NVMIX_I(pParentDirInode);
+    pSb = pParentDirInode->i_sb;
+
+    pBh = sb_bread(pSb, pNih->m_dataBlockIndex);
+    if (!pBh)
+    {
+        pr_err("nvmixfs: could not read data block.\n");
+
+        res = -EIO;
+        goto ERR;
+    }
+
+    // 找到对应目录项并清除。
+    for (i = 0; i < NVMIX_MAX_ENTRY_NUM; ++i)
+    {
+        pNd = (struct NvmixDentry *)(pBh->b_data) + i;
+
+        if ((0 != pNd->m_ino) && (pNd->m_ino == pInode->i_ino) && (0 == strcmp(pNd->m_name, pDentry->d_name.name)))
+        {
+            memset(pNd->m_name, 0, NVMIX_MAX_NAME_LENGTH);
+            pNd->m_ino = 0;
+        }
+    }
+
+    mark_buffer_dirty(pBh);
+
+
+    // 既然删除了 inode，超级块的 m_imap 位图信息需要更新，否则空占 inode。inode 区的内容倒不需要清空，新创建的时候覆盖即可。
+    // 磁盘上超级块区的缓冲区指针一直存在于内存中，被 NvmixSuperBlockHelper 维护，不需要手动创建和释放。
+    pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
+    pNsb = (struct NvmixSuperBlock *)(pNsbh->m_pBh->b_data);
+
+    test_and_clear_bit(pInode->i_ino, &pNsb->m_imap);
+
+    pr_info("nvmixfs: m_imap in nvmixUnlink(): %ld\n", pNsb->m_imap);
+
+    mark_buffer_dirty(pNsbh->m_pBh);
+
+    pr_info("nvmixfs: unlinked file successfully.\n");
+
+
+    // 减少文件的硬链接数。
+    drop_nlink(pInode);
+    // 释放目录项的引用。
+    dput(pDentry);
+
+
+ERR:
+    brelse(pBh);
+    pBh = NULL;
+
+
+    return res;
+}
+
 
 // 此函数的语义是在父目录下创建新的通用的 inode，并做基本通用项的初始化（具体见下面）。参数 struct inode* pParentDirInode 代表父目录。在 create() 语义下返回的 inode 是一个文件。创建目录有函数 mkdir()，里面也会调用此函数，在那的语义返回的 inode 就是一个目录。
 struct inode *nvmixNewInode(struct inode *pParentDirInode)
 {
     struct super_block *pSb = NULL;
     struct NvmixSuperBlockHelper *pNsbh = NULL;
+    struct NvmixSuperBlock *pNsb = NULL;
     struct inode *pInode = NULL;
     unsigned long index = 0;
 
 
     pSb = pParentDirInode->i_sb;
-    pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info); // 含义解释见 fs.c。
+    pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info); // pSb->s_fs_info 含义解释见 fs.c。
+    pNsb = (struct NvmixSuperBlock *)(pNsbh->m_pBh->b_data);
 
-    // find_first_zero_bit() 是内核提供的一个位图操作函数，其作用是从给定的位图中查找第一个值为 0 的位，即未使用的空闲资源。m_imap 是我们自己定义的管理 inode 分配状态的位图信息，类型是 unsigned long，刚好 4 个字节，32 位。每一位用于标识分配状态。
-    index = find_first_zero_bit(&pNsbh->m_imap, NVMIX_MAX_INODE_NUM);
+    // find_first_zero_bit() 是内核提供的一个位图操作函数，其作用是从给定的位图中查找第一个值为 0 的位，即未使用的空闲资源。m_imap 是我们自己定义的管理 inode 分配状态的位图信息，类型是 unsigned long，8 个字节，64 位。对本文件系统而言，使用低 32 位，每一位用于标识分配状态。
+    index = find_first_zero_bit(&pNsb->m_imap, NVMIX_MAX_INODE_NUM);
     if (NVMIX_MAX_INODE_NUM == index)
     {
         pr_err("nvmixfs: no space left in imap.\n");
@@ -162,9 +243,12 @@ struct inode *nvmixNewInode(struct inode *pParentDirInode)
     }
 
     // 原子性地测试并设置位图中的目标位，维护 m_imap 状态。
-    test_and_set_bit(index, &pNsbh->m_imap);
+    test_and_set_bit(index, &pNsb->m_imap);
     // 标记缓冲区为脏，表示内容已被修改，需要写回磁盘。
     mark_buffer_dirty(pNsbh->m_pBh);
+
+    pr_info("nvmixfs: m_imap in nvmixNewInode(): %ld\n", pNsb->m_imap);
+
 
     pInode = new_inode(pSb); // 此函数创建新的 inode 结构，并关联到文件系统的超级块。
 
@@ -186,7 +270,7 @@ ERR:
     return pInode;
 }
 
-// 在 nvmixCreate() 函数中使用，将新 inode 关联到父目录的目录项 dentry 中，会维护并修改父目录项的一些信息。
+// 在 nvmixCreate() 函数中使用，将新 inode 关联到父目录的目录项 dentry（非下面的参数 pDentry） 中，维护并修改父目录项的信息。
 int nvmixAddLink(struct dentry *pDentry, struct inode *pInode)
 {
     struct inode *pParentDirInode = NULL;
@@ -207,7 +291,7 @@ int nvmixAddLink(struct dentry *pDentry, struct inode *pInode)
     {
         pr_err("nvmixfs: could not read data block.\n");
 
-        res = -ENOMEM;
+        res = -EIO;
         goto ERR;
     }
 

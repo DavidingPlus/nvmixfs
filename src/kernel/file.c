@@ -23,4 +23,7 @@ struct file_operations nvmixFileFileOps = {
     .write_iter = generic_file_write_iter,
     .mmap = generic_file_mmap,
     .llseek = generic_file_llseek,
+    // fsync 的作用是将文件在内存中的修改（包括数据和元数据）强制同步到物理存储设备（如磁盘），确保数据持久化。
+    // 另一个命名相似的接口 fasync，用于管理文件的异步通知机制，二者完全不同。本文件系统暂不考虑。
+    .fsync = generic_file_fsync,
 };

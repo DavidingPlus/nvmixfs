@@ -122,7 +122,7 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     {
         pr_err("nvmixfs: could not read super block.\n");
 
-        res = -ENOMEM;
+        res = -EIO;
         goto ERR;
     }
     pNsb = (struct NvmixSuperBlock *)(pBh->b_data);
@@ -139,10 +139,6 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     // 填充 vfs super_block 结构的相关信息。
     pSb->s_magic = NVMIX_MAGIC_NUMBER;
     pSb->s_op = &nvmixSuperOps;
-
-    // 磁盘上的 NvmixSuperBlock 元数据向内存辅助结构 NvmixSuperBlockHelper 传递信息。
-    pNsbh->m_imap = pNsb->m_imap;
-    pNsbh->m_version = pNsb->m_version;
 
     // 分配根目录的 inode 和 dentry。
     pRootDirInode = nvmixIget(pSb, NVMIX_ROOT_DIR_INODE_NUMBER);
@@ -261,7 +257,7 @@ int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
     {
         pr_err("nvmixfs: could not read inode block.\n");
 
-        res = -ENOMEM;
+        res = -EIO;
         goto ERR;
     }
 

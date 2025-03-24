@@ -1,7 +1,7 @@
 /**
  * @file inode.c
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief 文件和目录的 inode 操作接口源文件。
+ * @brief 文件和目录的 inode 操作源文件。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *
@@ -17,14 +17,14 @@
 
 
 /**
- * @brief 文件 inode 的操作接口。
+ * @brief 文件 inode 操作的注册接口。
  */
 struct inode_operations nvmixFileInodeOps = {
     .getattr = simple_getattr,
 };
 
 /**
- * @brief 目录 inode 的操作接口。
+ * @brief 目录 inode 操作的注册接口。
  */
 struct inode_operations nvmixDirInodeOps = {
     .lookup = nvmixLookup,

@@ -14,7 +14,7 @@
 
 
 /**
- * @brief 注册 file_operations 的 iterate 函数，用于遍历当前目录的目录项。
+ * @brief 遍历指定打开目录的目录项。注册进程打开的目录操作的 iterate 函数。
  * @param pDirFile 进程打开的目录的 file 指针。
  * @param pCtx 存储遍历的目录项，由内核提供维护。
  * @return 是否成功。0 代表成功，非 0 代表失败。

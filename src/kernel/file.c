@@ -13,7 +13,7 @@
 
 
 /**
- * @brief 由进程打开的文件（用 file 结构描述）的操作接口。
+ * @brief 进程打开的文件操作的注册接口。
  */
 struct file_operations nvmixFileFileOps = {
     .owner = THIS_MODULE,

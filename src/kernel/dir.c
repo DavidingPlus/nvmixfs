@@ -17,7 +17,8 @@
 
 
 /**
- * @brief 由进程打开的目录（用 file 结构描述）的操作接口。
+ * @brief 进程打开的目录操作的注册接口。
+ * @details 进程打开的文件或目录用 vfs file 结构描述。
  */
 struct file_operations nvmixDirFileOps = {
     .owner = THIS_MODULE,

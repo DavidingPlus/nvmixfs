@@ -1,7 +1,7 @@
 /**
  * @file inode.h
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief 文件和目录的 inode 操作接口头文件。
+ * @brief 文件和目录的 inode 操作头文件。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *
@@ -42,7 +42,7 @@ struct NvmixInodeHelper
 
 
 /**
- * @brief 在父目录中查找指定目录项。
+ * @brief 在父目录中查找指定目录项。注册目录 inode 操作接口的 lookup 函数。
  * @param pParentDirInode 父目录的 inode 指针。
  * @param pDentry 要查找的目录项的 dentry 指针。
  * @param flags 标志位。
@@ -51,7 +51,7 @@ struct NvmixInodeHelper
 struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry, unsigned int flags);
 
 /**
- * @brief 在父目录中创建新文件。
+ * @brief 在父目录中创建新文件。注册目录 inode 操作接口的 create 函数。
  * @param pParentDirInode 父目录的 inode 指针。
  * @param pDentry 新创建的文件的 dentry 指针。
  * @param mode 创建模式参数。
@@ -62,7 +62,7 @@ struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry
 int nvmixCreate(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode, bool excl);
 
 /**
- * @brief 在父目录中删除指定文件。
+ * @brief 在父目录中删除指定文件。注册目录 inode 操作接口的 unlink 函数。
  * @param pParentDirInode 父目录的 inode 指针。
  * @param pDentry 要删除的文件的 dentry 指针。
  * @return 成功返回 0，失败返回非 0。

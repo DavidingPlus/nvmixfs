@@ -25,8 +25,7 @@ struct inode_operations nvmixFileInodeOps = {
 struct inode_operations nvmixDirInodeOps = {
     .lookup = nvmixLookup,
     .create = nvmixCreate,
-    // TODO simple_unlink() 是内核提供的通用函数，用于处理简单的文件删除操作。但它不会自动触发元数据同步到磁盘上，如目录 inode 的修改时间、目录项删除的持久化。后续应再包装一层。
-    .unlink = simple_unlink,
+    .unlink = nvmixUnlink,
 };
 
 // 由进程打开的文件（用 file 结构描述）的操作接口。
@@ -139,6 +138,13 @@ int nvmixCreate(struct inode *pParentDirInode, struct dentry *pDentry, umode_t m
 
 ERR:
     return res;
+}
+
+// 参数含义同样同 nvmixCreate()。
+int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
+{
+    // TODO simple_unlink() 是内核提供的通用函数，用于处理简单的文件删除操作。但它不会自动触发元数据同步到磁盘上，如目录 inode 的修改时间、目录项删除的持久化。后续应再包装一层。
+    return simple_unlink(pParentDirInode, pDentry);
 }
 
 

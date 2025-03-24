@@ -45,5 +45,7 @@ struct dentry *nvmixLookup(struct inode *, struct dentry *, unsigned int);
 
 int nvmixCreate(struct inode *, struct dentry *, umode_t, bool);
 
+int nvmixUnlink(struct inode *, struct dentry *);
+
 
 #endif

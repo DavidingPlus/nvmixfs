@@ -51,7 +51,7 @@ int nvmixReaddir(struct file *pParentDirFile, struct dir_context *pCtx)
     {
         pr_err("nvmixfs: could not read data block.\n");
 
-        res = -ENOMEM;
+        res = -EIO;
         goto ERR;
     }
 

@@ -93,6 +93,7 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     struct dentry *pRootDirDentry = NULL;
     int res = 0;
 
+
     // 为辅助结构 NvmixSuperBlockHelper 分配内存。
     pNsbh = kzalloc(sizeof(struct NvmixSuperBlockHelper), GFP_KERNEL);
     if (!pNsbh)
@@ -121,7 +122,7 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     {
         pr_err("nvmixfs: could not read super block.\n");
 
-        res = -ENOMEM;
+        res = -EIO;
         goto ERR;
     }
     pNsb = (struct NvmixSuperBlock *)(pBh->b_data);
@@ -138,13 +139,6 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     // 填充 vfs super_block 结构的相关信息。
     pSb->s_magic = NVMIX_MAGIC_NUMBER;
     pSb->s_op = &nvmixSuperOps;
-
-    // 磁盘上的 NvmixSuperBlock 元数据向内存辅助结构 NvmixSuperBlockHelper 传递信息。
-    pNsbh->m_imap = pNsb->m_imap;
-
-    pNsbh->m_version.m_major = pNsb->m_version.m_major;
-    pNsbh->m_version.m_minor = pNsb->m_version.m_minor;
-    pNsbh->m_version.m_alter = pNsb->m_version.m_alter;
 
     // 分配根目录的 inode 和 dentry。
     pRootDirInode = nvmixIget(pSb, NVMIX_ROOT_DIR_INODE_NUMBER);
@@ -213,6 +207,7 @@ struct inode *nvmixAllocInode(struct super_block *pSb)
 {
     struct NvmixInodeHelper *pNih = NULL;
 
+
     // kzalloc() 与 kmalloc() 的区别在于 kzalloc() 会把动态开辟的内存的内容置 0。
     pNih = kzalloc(sizeof(struct NvmixInodeHelper), GFP_KERNEL);
     if (!pNih)
@@ -262,7 +257,7 @@ int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
     {
         pr_err("nvmixfs: could not read inode block.\n");
 
-        res = -ENOMEM;
+        res = -EIO;
         goto ERR;
     }
 

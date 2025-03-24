@@ -16,24 +16,17 @@
 #include <linux/buffer_head.h>
 
 
+/**
+ * @struct NvmixSuperBlockHelper
+ * @brief 内核 vfs 通过 NvmixSuperBlockHelper 结构的 m_pBh 缓存区指针与磁盘上的 NvmixSuperBlock 建立联系。
+ * @details 这个指针在 fill_super() 函数中被初始化，然后就没有释放过。记录这个指针是为了在操作文件系统的时候能够及时更新超级块区的信息。这是不可避免的。包装一层是为了语义和美观。
+ */
 struct NvmixSuperBlockHelper
 {
     /**
      * @brief 磁盘上超级块区的缓冲区指针。
-     * @details 这个指针在 fill_super() 函数中被初始化，然后就没有释放过。记录这个指针是为了在操作文件系统的时候能够及时更新超级块区的信息。这是不可避免的。
      */
     struct buffer_head *m_pBh;
-
-    /**
-     * @brief 管理 inode 分配状态的位图信息。
-     * @details 同 defs.h 中 NvmixSuperBlock 的 m_imap。
-     */
-    unsigned long m_imap;
-
-    /**
-     * @brief 文件系统的版本号。
-     */
-    struct NvmixVersion m_version;
 };
 
 

@@ -195,7 +195,7 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
 
     test_and_clear_bit(pInode->i_ino, &pNsbh->m_imap);
 
-    pr_info("nvmixfs: m_imap %ld\n", pNsbh->m_imap);
+    pr_info("nvmixfs: m_imap in nvmixUnlink(): %ld\n", pNsbh->m_imap);
 
     mark_buffer_dirty(pNsbh->m_pBh);
 

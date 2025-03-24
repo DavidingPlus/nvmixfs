@@ -121,7 +121,7 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     {
         pr_err("nvmixfs: could not read super block.\n");
 
-        res = -ENOMEM;
+        res = -EIO;
         goto ERR;
     }
     pNsb = (struct NvmixSuperBlock *)(pBh->b_data);
@@ -262,7 +262,7 @@ int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
     {
         pr_err("nvmixfs: could not read inode block.\n");
 
-        res = -ENOMEM;
+        res = -EIO;
         goto ERR;
     }
 

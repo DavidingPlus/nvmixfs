@@ -148,20 +148,17 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
     struct buffer_head *pBh = NULL;
     struct super_block *pSb = NULL;
     struct NvmixDentry *pNd = NULL;
+    struct NvmixSuperBlockHelper *pNsbh = NULL;
     int i = 0;
     int res = 0;
 
 
-    // simple_unlink() 的实现，复制粘贴。
+    // vfs 部分的代码参考 simple_unlink() 的实现。
     pInode = pDentry->d_inode;
     // 更新时间戳。
     pInode->i_ctime = current_time(pInode);
     pParentDirInode->i_ctime = current_time(pInode);
     pParentDirInode->i_mtime = current_time(pInode);
-    // 减少文件的硬链接数。
-    drop_nlink(pInode);
-    // 释放目录项的引用。
-    dput(pDentry);
 
     // 将磁盘上父目录的目录项数组读到缓存中。
     pNih = NVMIX_I(pParentDirInode);
@@ -173,7 +170,7 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
     {
         pr_err("nvmixfs: could not read data block.\n");
 
-        res = -ENOMEM;
+        res = -EIO;
         goto ERR;
     }
 
@@ -191,7 +188,23 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
 
     mark_buffer_dirty(pBh);
 
+    // 既然删除了 inode，超级块的 m_imap 位图信息需要更新，否则空占 inode。inode 区的内容倒不需要清空，新创建的时候覆盖即可。
+    // 磁盘上超级块区的缓冲区指针一直存在于内存中，被 NvmixSuperBlockHelper 维护，不需要手动创建和释放。
+    pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
+
+    test_and_clear_bit(pNd->m_ino, &pNsbh->m_imap);
+
+    pr_info("nvmixfs: m_imap %ld\n", pNsbh->m_imap);
+
+    mark_buffer_dirty(pNsbh->m_pBh);
+
     pr_info("nvmixfs: unlinked file successfully.\n");
+
+
+    // 减少文件的硬链接数。
+    drop_nlink(pInode);
+    // 释放目录项的引用。
+    dput(pDentry);
 
 
 ERR:
@@ -270,7 +283,7 @@ int nvmixAddLink(struct dentry *pDentry, struct inode *pInode)
     {
         pr_err("nvmixfs: could not read data block.\n");
 
-        res = -ENOMEM;
+        res = -EIO;
         goto ERR;
     }
 

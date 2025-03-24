@@ -11,13 +11,13 @@
 
 int main(int argc, char const *argv[])
 {
-    FILE *file;
+    FILE *file = NULL;
     char buffer[NVMIX_BLOCK_SIZE] = {0};
     struct NvmixSuperBlock msb;
     struct NvmixInode rootDirInode;
     struct NvmixInode fileInode;
     struct NvmixDentry fileDentry;
-    int i;
+    int i = 0;
 
     if (2 != argc)
     {
@@ -42,7 +42,8 @@ int main(int argc, char const *argv[])
     msb.m_version.m_minor = NVMIX_CONFIG_VERSION_MINOR;
     msb.m_version.m_alter = NVMIX_CONFIG_VERSION_ALTER;
 
-    msb.m_imap = 1; // 初始情况下只有根目录。
+    // 直接访问块设备就不会走 vfs 这一层了，所以初始化的时候 m_imap 需要考虑 a.txt，写为 3 而不是 1。
+    msb.m_imap = 0x03;
 
     // zero disk
     memset(buffer, 0, NVMIX_BLOCK_SIZE);

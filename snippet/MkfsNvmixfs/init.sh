@@ -1,7 +1,16 @@
 # 遇到错误立即退出。
 set -e
 
-./clear.sh
+
+if mountpoint -q /mnt/nvmixfs/; then
+    sudo umount /mnt/nvmixfs/
+
+fi
+
+if lsmod | grep -q "nvmixfs"; then
+    sudo rmmod nvmixfs
+
+fi
 
 sudo insmod ./build/linux/x86_64/debug/bin/nvmixfs.ko
 

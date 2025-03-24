@@ -10,6 +10,10 @@
  *
  */
 
+#ifndef _NVMIX_CONFIG_H_
+#define _NVMIX_CONFIG_H_
+
+
 /**
  * @brief 完整版本号（X.Y.Z）。
  */
@@ -30,3 +34,6 @@
  * @details patch 和 alter 均可。Linux 内核的习惯是 patch，这里顺从 XMake 内置变量命名规则，即 alter。
  */
 #define NVMIX_CONFIG_VERSION_ALTER ${VERSION_ALTER}
+
+
+#endif

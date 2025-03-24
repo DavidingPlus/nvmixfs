@@ -1,7 +1,7 @@
 /**
  * @file fs.c
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief file_system_type 结构源文件。
+ * @brief 文件系统类型结构和超级块操作源文件。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *
@@ -19,6 +19,9 @@
 #include <linux/slab.h>
 
 
+/**
+ * @brief 文件系统类型结构。
+ */
 struct file_system_type nvmixFileSystemType = {
     .owner = THIS_MODULE,
     .name = "nvmixfs",
@@ -27,9 +30,11 @@ struct file_system_type nvmixFileSystemType = {
     .fs_flags = FS_REQUIRES_DEV, // 表示本系统是基于块设备的文件系统。
 };
 
+/**
+ * @brief 超级块操作的注册接口。
+ */
 struct super_operations nvmixSuperOps = {
     .statfs = simple_statfs,
-    // put_super 的作用是在文件系统卸载或不再需要超级块时，释放与该超级块关联的资源。
     .put_super = nvmixPutSuper,
     .alloc_inode = nvmixAllocInode,
     .destroy_inode = nvmixDestroyInode,
@@ -82,8 +87,6 @@ void nvmixKillSb(struct super_block *pSb)
     pr_info("nvmixfs: unmounted disk successfully.\n");
 }
 
-// fill_super() 是 Linux 内核文件系统模块中用于初始化超级块的核心函数，用于将磁盘上的我们设计的文件系统元数据加载到内存中，并建立文件系统的基本结构，使内核能够识别和管理该文件系统。
-// 在代码中，我发现元数据都是从磁盘上读取来的，并没有发现第一次初始化数据的过程，这是为什么呢？明确 fill_super() 的语义是将磁盘上我们设计的文件系统元数据加载并初始化文件系统，它不负责第一次初始化磁盘上数据的过程。整个文件系统除了这个内核模块还有 mkfs.nvmixfs 这个用户层程序，它负责格式化文件系统并第一次初始化数据。
 int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
 {
     struct NvmixSuperBlockHelper *pNsbh = NULL;
@@ -236,6 +239,7 @@ void nvmixDestroyInode(struct inode *pInode)
     // kzfree() 的区别是先清 0 再释放内存，避免敏感内存内容的残留。
     // 如果传入的指针是 NULL, kzfree() 什么都不会做。
     // 当前版本内核为 5.4，5.15 中 kzfree() 接口已废弃，转而使用 kfree_sensitive()。
+    // 销毁 inode 时，同时也要销毁它所在的 NvmixInodeHelper 结构，因此直接释放外层 NvmixInodeHelper 结构。
     kzfree(NVMIX_I(pInode));
 
     pr_info("nvmixfs: destroyed inode successfully.\n");
@@ -287,9 +291,6 @@ ERR:
     return res;
 }
 
-// 此函数通过 super_block 结构和 vfs 中全局唯一 inode 号获得 inode。包括如下两种情况：
-// 1. 从缓存中获取 inode：若 inode 已存在于内存中（缓存命中），直接返回。
-// 2. 初始化新 inode：若 inode 未缓存（I_NEW 状态），从磁盘读取元数据并初始化 vfs inode。
 struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
 {
     struct inode *pInode = NULL;

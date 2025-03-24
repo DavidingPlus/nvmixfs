@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief nvmixfs 内核模块主程序入口文件。
+ * @brief 内核模块主程序入口文件。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *
@@ -17,7 +17,7 @@
 MODULE_VERSION(NVMIX_CONFIG_VERSION);
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("DavidingPlus");
-MODULE_DESCRIPTION("A Simple FileSystem");
+MODULE_DESCRIPTION("A Simple FileSystem for NVM and SSD Hybrid Storage");
 
 
 extern struct file_system_type nvmixFileSystemType;

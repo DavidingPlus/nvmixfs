@@ -188,11 +188,12 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
 
     mark_buffer_dirty(pBh);
 
+
     // 既然删除了 inode，超级块的 m_imap 位图信息需要更新，否则空占 inode。inode 区的内容倒不需要清空，新创建的时候覆盖即可。
     // 磁盘上超级块区的缓冲区指针一直存在于内存中，被 NvmixSuperBlockHelper 维护，不需要手动创建和释放。
     pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
 
-    test_and_clear_bit(pNd->m_ino, &pNsbh->m_imap);
+    test_and_clear_bit(pInode->i_ino, &pNsbh->m_imap);
 
     pr_info("nvmixfs: m_imap %ld\n", pNsbh->m_imap);
 
@@ -241,6 +242,9 @@ struct inode *nvmixNewInode(struct inode *pParentDirInode)
     test_and_set_bit(index, &pNsbh->m_imap);
     // 标记缓冲区为脏，表示内容已被修改，需要写回磁盘。
     mark_buffer_dirty(pNsbh->m_pBh);
+
+    pr_info("nvmixfs: m_imap in nvmixNewInode(): %ld\n", pNsbh->m_imap);
+
 
     pInode = new_inode(pSb); // 此函数创建新的 inode 结构，并关联到文件系统的超级块。
 

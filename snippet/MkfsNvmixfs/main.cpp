@@ -42,7 +42,7 @@ int main(int argc, char const *argv[])
     msb.m_version.m_minor = NVMIX_CONFIG_VERSION_MINOR;
     msb.m_version.m_alter = NVMIX_CONFIG_VERSION_ALTER;
 
-    msb.m_imap = 0x03;
+    msb.m_imap = 1; // 初始情况下只有根目录。
 
     // zero disk
     memset(buffer, 0, NVMIX_BLOCK_SIZE);

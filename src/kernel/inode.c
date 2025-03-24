@@ -26,6 +26,7 @@ struct inode_operations nvmixDirInodeOps = {
     .lookup = nvmixLookup,
     .create = nvmixCreate,
     .unlink = nvmixUnlink,
+    // TODO 添加创建目录 mkdir() 和删除目录 rmdir() 支持。
 };
 
 // 由进程打开的文件（用 file 结构描述）的操作接口。

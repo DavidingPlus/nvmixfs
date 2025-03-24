@@ -93,6 +93,7 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     struct dentry *pRootDirDentry = NULL;
     int res = 0;
 
+
     // 为辅助结构 NvmixSuperBlockHelper 分配内存。
     pNsbh = kzalloc(sizeof(struct NvmixSuperBlockHelper), GFP_KERNEL);
     if (!pNsbh)
@@ -205,6 +206,7 @@ void nvmixPutSuper(struct super_block *pSb)
 struct inode *nvmixAllocInode(struct super_block *pSb)
 {
     struct NvmixInodeHelper *pNih = NULL;
+
 
     // kzalloc() 与 kmalloc() 的区别在于 kzalloc() 会把动态开辟的内存的内容置 0。
     pNih = kzalloc(sizeof(struct NvmixInodeHelper), GFP_KERNEL);

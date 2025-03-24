@@ -143,8 +143,63 @@ ERR:
 // 参数含义同样同 nvmixCreate()。
 int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
 {
-    // TODO simple_unlink() 是内核提供的通用函数，用于处理简单的文件删除操作。但它不会自动触发元数据同步到磁盘上，如目录 inode 的修改时间、目录项删除的持久化。后续应再包装一层。
-    return simple_unlink(pParentDirInode, pDentry);
+    struct inode *pInode = NULL;
+    struct NvmixInodeHelper *pNih = NULL;
+    struct buffer_head *pBh = NULL;
+    struct super_block *pSb = NULL;
+    struct NvmixDentry *pNd = NULL;
+    int i = 0;
+    int res = 0;
+
+
+    // simple_unlink() 的实现，复制粘贴。
+    pInode = pDentry->d_inode;
+    // 更新时间戳。
+    pInode->i_ctime = current_time(pInode);
+    pParentDirInode->i_ctime = current_time(pInode);
+    pParentDirInode->i_mtime = current_time(pInode);
+    // 减少文件的硬链接数。
+    drop_nlink(pInode);
+    // 释放目录项的引用。
+    dput(pDentry);
+
+    // 将磁盘上父目录的目录项数组读到缓存中。
+    pNih = NVMIX_I(pParentDirInode);
+
+    pSb = pParentDirInode->i_sb;
+
+    pBh = sb_bread(pSb, pNih->m_dataBlockIndex);
+    if (!pBh)
+    {
+        pr_err("nvmixfs: could not read data block.\n");
+
+        res = -ENOMEM;
+        goto ERR;
+    }
+
+    // 找到对应目录项并清除。
+    for (i = 0; i < NVMIX_MAX_ENTRY_NUM; ++i)
+    {
+        pNd = (struct NvmixDentry *)(pBh->b_data) + i;
+
+        if ((0 != pNd->m_ino) && (pNd->m_ino == pInode->i_ino) && (0 == strcmp(pNd->m_name, pDentry->d_name.name)))
+        {
+            memset(pNd->m_name, 0, NVMIX_MAX_NAME_LENGTH);
+            pNd->m_ino = 0;
+        }
+    }
+
+    mark_buffer_dirty(pBh);
+
+    pr_info("nvmixfs: unlinked file successfully.\n");
+
+
+ERR:
+    brelse(pBh);
+    pBh = NULL;
+
+
+    return res;
 }
 
 
@@ -194,7 +249,7 @@ ERR:
     return pInode;
 }
 
-// 在 nvmixCreate() 函数中使用，将新 inode 关联到父目录的目录项 dentry 中，会维护并修改父目录项的一些信息。
+// 在 nvmixCreate() 函数中使用，将新 inode 关联到父目录的目录项 dentry（非下面的参数 pDentry） 中，维护并修改父目录项的信息。
 int nvmixAddLink(struct dentry *pDentry, struct inode *pInode)
 {
     struct inode *pParentDirInode = NULL;

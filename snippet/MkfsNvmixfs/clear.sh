@@ -1,3 +1,4 @@
+# 遇到错误立即退出。
 set -e
 
 
@@ -8,5 +9,10 @@ fi
 
 if lsmod | grep -q "nvmixfs"; then
     sudo rmmod nvmixfs
+
+fi
+
+if [[ -d "/mnt/nvmixfs/" ]]; then
+    sudo rm -rf /mnt/nvmixfs/
 
 fi

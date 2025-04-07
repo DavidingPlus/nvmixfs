@@ -127,7 +127,7 @@ struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry
 
 int nvmixCreate(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode, bool excl)
 {
-    int res;
+    int res = 0;
 
 
     res = nvmixMknod(pParentDirInode, pDentry, mode | S_IFREG, excl);
@@ -223,7 +223,7 @@ ERR:
 
 int nvmixMkdir(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode)
 {
-    int res;
+    int res = 0;
 
 
     res = nvmixMknod(pParentDirInode, pDentry, mode | S_IFDIR, 0);
@@ -243,9 +243,30 @@ ERR:
 
 int nvmixRmdir(struct inode *pParentDirInode, struct dentry *pDentry)
 {
-    // TODO
+    int res = 0;
 
-    return 0;
+
+    // 首先检查目录是否为空。
+    // simple_empty() 函数返回非 0 表示 true，即空，返回 0 表示 false，即非空。
+    if (0 == simple_empty(pDentry))
+    {
+        res = -ENOTEMPTY;
+
+        pr_info("nvmixfs: error when removing a directory cause not empty.\n");
+
+        goto ERR;
+    }
+
+    // 以下步骤按照 simple_rmdir() 来的。
+    drop_nlink(d_inode(pDentry));
+    nvmixUnlink(pParentDirInode, pDentry);
+    drop_nlink(pParentDirInode);
+
+    pr_info("nvmixfs: removed directory successfully.\n");
+
+
+ERR:
+    return res;
 }
 
 

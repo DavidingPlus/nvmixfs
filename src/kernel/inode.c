@@ -30,7 +30,8 @@ struct inode_operations nvmixDirInodeOps = {
     .lookup = nvmixLookup,
     .create = nvmixCreate,
     .unlink = nvmixUnlink,
-    // TODO 添加创建目录 mkdir() 和删除目录 rmdir() 支持。
+    .mkdir = nvmixMkdir,
+    .rmdir = nvmixRmdir,
 };
 
 extern struct file_operations nvmixFileFileOps;
@@ -236,6 +237,20 @@ ERR:
 
 
     return res;
+}
+
+int nvmixMkdir(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode)
+{
+    // TODO
+
+    return 0;
+}
+
+int nvmixRmdir(struct inode *pParentDirInode, struct dentry *pDentry)
+{
+    // TODO
+
+    return 0;
 }
 
 

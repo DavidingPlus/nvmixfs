@@ -69,5 +69,22 @@ int nvmixCreate(struct inode *pParentDirInode, struct dentry *pDentry, umode_t m
  */
 int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry);
 
+/**
+ * @brief 在父目录中创建新目录。注册目录 inode 操作接口的 mkdir 函数。
+ * @param pParentDirInode 父目录的 inode 指针。
+ * @param pDentry 新创建的目录的 dentry 指针。
+ * @param mode 创建模式参数。
+ * @return 成功返回 0，失败返回非 0。
+ */
+int nvmixMkdir(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode);
+
+/**
+ * @brief 在父目录中删除指定目录。注册目录 inode 操作接口的 rmdir 函数。
+ * @param pParentDirInode 父目录的 inode 指针。
+ * @param pDentry 要删除的目录的 dentry 指针。
+ * @return 成功返回 0，失败返回非 0。
+ */
+int nvmixRmdir(struct inode *pParentDirInode, struct dentry *pDentry);
+
 
 #endif

@@ -57,7 +57,6 @@ struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry
  * @param mode 创建模式参数。
  * @param excl 独占创建标志，若设置为 true 要求目标必须不存在。暂未用到。
  * @return 成功返回 0，失败返回非 0。
- * @details 接口的参数逆天。pParentDirInode 是父目录的 inode 节点，在函数里我需要手动创建新的 vfs inode。而 pDentry 却是新 inode 节点对应的 dentry 对象，内核帮我创建好了。很容易误解为父目录的 dentry，我们需要自己手动创建 dentry，但是内核似乎并没有这种函数。
  */
 int nvmixCreate(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode, bool excl);
 

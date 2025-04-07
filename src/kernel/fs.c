@@ -350,7 +350,12 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
     pInode->i_mapping->a_ops = &nvmixAops;
 
     // 根据 inode 是文件还是目录进行不同操作的注册。
-    if (S_ISDIR(pInode->i_mode))
+    if (S_ISREG(pInode->i_mode))
+    {
+        pInode->i_fop = &nvmixFileFileOps;
+        pInode->i_op = &nvmixFileInodeOps;
+    }
+    else if (S_ISDIR(pInode->i_mode))
     {
         pInode->i_fop = &nvmixDirFileOps;
         pInode->i_op = &nvmixDirInodeOps;
@@ -358,11 +363,6 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
         // inode 的硬链接个数 i_nlink 默认为 1。但对目录应为 2。例如新建目录 temp，两个硬链接分别为 temp 目录的 . 和父目录的 temp。
         // 硬链接与原始文件共享相同的 inode（索引节点），即两者指向磁盘上的同一块数据。删除原始文件后，只要存在至少一个硬链接，文件数据仍可通过其他硬链接访问。
         inc_nlink(pInode);
-    }
-    else if (S_ISREG(pInode->i_mode))
-    {
-        pInode->i_fop = &nvmixFileFileOps;
-        pInode->i_op = &nvmixFileInodeOps;
     }
     else
     {

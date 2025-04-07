@@ -30,10 +30,13 @@ struct inode_operations nvmixDirInodeOps = {
     .lookup = nvmixLookup,
     .create = nvmixCreate,
     .unlink = nvmixUnlink,
-    // TODO 添加创建目录 mkdir() 和删除目录 rmdir() 支持。
+    .mkdir = nvmixMkdir,
+    .rmdir = nvmixRmdir,
 };
 
 extern struct file_operations nvmixFileFileOps;
+
+extern struct file_operations nvmixDirFileOps;
 
 extern struct address_space_operations nvmixAops;
 
@@ -65,6 +68,17 @@ static int nvmixUpdateParentDirDentry(struct dentry *pDentry, struct inode *pIno
  * @details 为什么会有第二个参数，且为什么是二级指针，请参考函数定义的注释。
  */
 static struct NvmixDentry *nvmixFindDentry(struct dentry *pDentry, struct buffer_head **ppBh);
+
+/**
+ * @brief 在父目录中创建新文件或目录的节点。
+ * @param pParentDirInode 父目录的 inode 指针。
+ * @param pDentry 新创建的节点的 dentry 指针。
+ * @param mode 创建模式参数。
+ * @param excl 独占创建标志，若设置为 true 要求目标必须不存在。暂未用到。
+ * @return 成功返回 0，失败返回非 0。
+ * @details 接口的参数逆天。pParentDirInode 是父目录的 inode 节点，在函数里我需要手动创建新的 vfs inode。而 pDentry 却是新 inode 节点对应的 dentry 对象，内核帮我创建好了。很容易误解为父目录的 dentry，我们需要自己手动创建 dentry，但是内核似乎并没有这种函数。
+ */
+static int nvmixMknod(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode, bool excl);
 
 
 struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry, unsigned int flags)
@@ -114,48 +128,17 @@ struct dentry *nvmixLookup(struct inode *pParentDirInode, struct dentry *pDentry
 int nvmixCreate(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode, bool excl)
 {
     int res = 0;
-    struct inode *pInode = NULL;
-    struct NvmixInodeHelper *pNih = NULL;
 
 
-    pInode = nvmixNewInode(pParentDirInode);
-    if (!pInode)
-    {
-        pr_err("nvmixfs: error when allocating a new inode.\n");
-
-        res = -ENOMEM;
-        goto ERR;
-    }
-
-    pInode->i_mode = mode;
-
-    // 参考 ext4_create()，对这些操作做了注册。
-    pInode->i_op = &nvmixFileInodeOps;
-    pInode->i_fop = &nvmixFileFileOps;
-    pInode->i_mapping->a_ops = &nvmixAops;
-
-    pNih = NVMIX_I(pInode);
-    pNih->m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + pInode->i_ino;
-
-    // 将新 inode 关联到父目录的目录项 dentry 中，会维护并修改父目录项的一些信息。与下面的 d_instantiate() 作用不同，注意区分。
-    // 注意此 pDentry 是 pInode 对应的 pDentry，而非父目录的 dentry，前面提到过。
-    res = nvmixUpdateParentDirDentry(pDentry, pInode);
+    res = nvmixMknod(pParentDirInode, pDentry, mode | S_IFREG, excl);
     if (0 != res)
     {
-        // 减少 inode 的硬链接计数。
-        inode_dec_link_count(pInode);
-        // 释放 inode 的引用计数。
-        iput(pInode);
+        pr_info("nvmixfs: failed to create new file.\n");
 
         goto ERR;
     }
 
-    // dentry 作用是关联 inode 和文件名。d_instantiate() 将 dentry 与 inode 绑定，使文件名正确指向文件。
-    d_instantiate(pDentry, pInode);
-    // 标记 inode 为脏，表示其元数据（如权限、大小）或数据已修改，需后续同步到磁盘。
-    mark_inode_dirty(pInode);
-
-    pr_info("nvmixfs: new file inode created successfully, ino = %lu\n", pInode->i_ino);
+    pr_info("nvmixfs: created new file successfully.\n");
 
 
 ERR:
@@ -235,6 +218,54 @@ ERR:
     pBh = NULL;
 
 
+    return res;
+}
+
+int nvmixMkdir(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode)
+{
+    int res = 0;
+
+
+    res = nvmixMknod(pParentDirInode, pDentry, mode | S_IFDIR, 0);
+    if (0 != res)
+    {
+        pr_info("nvmixfs: failed to create new directory.\n");
+
+        goto ERR;
+    }
+
+    pr_info("nvmixfs: created new directory successfully.\n");
+
+
+ERR:
+    return res;
+}
+
+int nvmixRmdir(struct inode *pParentDirInode, struct dentry *pDentry)
+{
+    int res = 0;
+
+
+    // 首先检查目录是否为空。
+    // simple_empty() 函数返回非 0 表示 true，即空，返回 0 表示 false，即非空。
+    if (0 == simple_empty(pDentry))
+    {
+        res = -ENOTEMPTY;
+
+        pr_info("nvmixfs: error when removing a directory cause not empty.\n");
+
+        goto ERR;
+    }
+
+    // 以下步骤按照 simple_rmdir() 来的。
+    drop_nlink(d_inode(pDentry));
+    nvmixUnlink(pParentDirInode, pDentry);
+    drop_nlink(pParentDirInode);
+
+    pr_info("nvmixfs: removed directory successfully.\n");
+
+
+ERR:
     return res;
 }
 
@@ -393,4 +424,72 @@ struct NvmixDentry *nvmixFindDentry(struct dentry *pDentry, struct buffer_head *
 // 注意，这里一定不能释放 pBh，因为返回的 struct NvmixDentry * 依赖于 pBh 缓冲区的存在。如果释放了，传递出去以后就会内存泄露。nvmixFindDentry() 作为唯一被 nvmixLookup() 调用的工具函数，nvmixLookup() 需要用到 struct NvmixDentry * 指针，因此需要需要想办法将 pBh 传递出去。一种合适的方法就是使用 pBh 的指针，即二级指针 struct buffer_head **。至于 pBh 的释放留到 nvmixLookup() 中。
 ERR:
     return pRes;
+}
+
+int nvmixMknod(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode, bool excl)
+{
+    int res = 0;
+    struct inode *pInode = NULL;
+    struct NvmixInodeHelper *pNih = NULL;
+
+
+    pInode = nvmixNewInode(pParentDirInode);
+    if (!pInode)
+    {
+        pr_err("nvmixfs: error when allocating a new inode.\n");
+
+        res = -ENOMEM;
+        goto ERR;
+    }
+
+    pInode->i_mode = mode;
+
+    // 参考 ext4_create()，对以下操作做了注册。注意对应文件和目录分别处理。
+    pInode->i_mapping->a_ops = &nvmixAops;
+
+    if (S_ISREG(pInode->i_mode))
+    {
+        pInode->i_fop = &nvmixFileFileOps;
+        pInode->i_op = &nvmixFileInodeOps;
+    }
+    else if (S_ISDIR(pInode->i_mode))
+    {
+        pInode->i_fop = &nvmixDirFileOps;
+        pInode->i_op = &nvmixDirInodeOps;
+
+        // 见 fs.c 的 nvmixIget() 函数注释。
+        inc_nlink(pInode);
+    }
+    else
+    {
+        // 非普通文件或目录，暂不考虑。
+    }
+
+
+    pNih = NVMIX_I(pInode);
+    pNih->m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + pInode->i_ino;
+
+    // 将新 inode 关联到父目录的目录项 dentry 中，会维护并修改父目录项的一些信息。与下面的 d_instantiate() 作用不同，注意区分。
+    // 注意此 pDentry 是 pInode 对应的 pDentry，而非父目录的 dentry，前面提到过。
+    res = nvmixUpdateParentDirDentry(pDentry, pInode);
+    if (0 != res)
+    {
+        // 减少 inode 的硬链接计数。
+        inode_dec_link_count(pInode);
+        // 释放 inode 的引用计数。
+        iput(pInode);
+
+        goto ERR;
+    }
+
+    // dentry 作用是关联 inode 和文件名。d_instantiate() 将 dentry 与 inode 绑定，使文件名正确指向文件。
+    d_instantiate(pDentry, pInode);
+    // 标记 inode 为脏，表示其元数据（如权限、大小）或数据已修改，需后续同步到磁盘。
+    mark_inode_dirty(pInode);
+
+    pr_info("nvmixfs: created new inode successfully, ino = %lu\n", pInode->i_ino);
+
+
+ERR:
+    return res;
 }

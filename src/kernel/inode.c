@@ -36,6 +36,8 @@ struct inode_operations nvmixDirInodeOps = {
 
 extern struct file_operations nvmixFileFileOps;
 
+extern struct file_operations nvmixDirFileOps;
+
 extern struct address_space_operations nvmixAops;
 
 
@@ -128,7 +130,7 @@ int nvmixCreate(struct inode *pParentDirInode, struct dentry *pDentry, umode_t m
         goto ERR;
     }
 
-    pInode->i_mode = mode;
+    pInode->i_mode = mode | S_IFREG;
 
     // 参考 ext4_create()，对这些操作做了注册。
     pInode->i_op = &nvmixFileInodeOps;
@@ -241,9 +243,48 @@ ERR:
 
 int nvmixMkdir(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mode)
 {
-    // TODO
+    int res = 0;
+    struct inode *pInode = NULL;
+    struct NvmixInodeHelper *pNih = NULL;
 
-    return 0;
+
+    pInode = nvmixNewInode(pParentDirInode);
+    if (!pInode)
+    {
+        pr_err("nvmixfs: error when allocating a new inode.\n");
+
+        res = -ENOMEM;
+        goto ERR;
+    }
+
+    pInode->i_mode = mode | S_IFDIR;
+
+    pInode->i_op = &nvmixDirInodeOps;
+    pInode->i_fop = &nvmixDirFileOps;
+    pInode->i_mapping->a_ops = &nvmixAops;
+
+    inc_nlink(pInode);
+
+    pNih = NVMIX_I(pInode);
+    pNih->m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + pInode->i_ino;
+
+    res = nvmixUpdateParentDirDentry(pDentry, pInode);
+    if (0 != res)
+    {
+        inode_dec_link_count(pInode);
+        iput(pInode);
+
+        goto ERR;
+    }
+
+    d_instantiate(pDentry, pInode);
+    mark_inode_dirty(pInode);
+
+    pr_info("nvmixfs: new file inode created successfully, ino = %lu\n", pInode->i_ino);
+
+
+ERR:
+    return res;
 }
 
 int nvmixRmdir(struct inode *pParentDirInode, struct dentry *pDentry)

@@ -24,11 +24,11 @@ struct file_operations nvmixDirFileOps = {
     .owner = THIS_MODULE,
     // read 是 2.6 版本以前的旧接口，iterate 和 iterate_shared 是 2.6 以后的接口，都可用来遍历目录。
     // read 不支持并发访问。
+    .read = generic_read_dir,
     // iterate 是独占式遍历，持有目录的 inode 互斥锁，支持并发访问，确保遍历期间目录结构不会被修改。
     // iterate_shared 是共享式遍历，仅持有目录的 inode 共享锁，允许其他进程并发遍历同一目录。
     // 优先使用 iterate_shared，未实现则退回 iterate。
-    .read = generic_read_dir,
-    // TODO 后续考虑共享式遍历的 iterate_shared 的修改实现。
+    // 后续考虑共享式遍历的 iterate_shared 的修改实现。
     .iterate = nvmixReaddir,
 };
 

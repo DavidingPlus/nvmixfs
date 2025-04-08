@@ -187,6 +187,8 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
         {
             memset(pNd->m_name, 0, NVMIX_MAX_NAME_LENGTH);
             pNd->m_ino = 0;
+
+            break;
         }
     }
 
@@ -409,7 +411,8 @@ struct NvmixDentry *nvmixFindDentry(struct dentry *pDentry, struct buffer_head *
     for (i = 0; i < NVMIX_MAX_ENTRY_NUM; ++i)
     {
         pNd = (struct NvmixDentry *)(pBh->b_data) + i;
-        if ((0 != pNd->m_ino) && (0 == strcmp(pNd->m_name, pDentry->d_name.name)))
+
+        if ((0 != pNd->m_ino) && (pNd->m_ino == pDentry->d_inode->i_ino) && (0 == strcmp(pNd->m_name, pDentry->d_name.name)))
         {
             pr_info("nvmixfs: found entry %s on position: %d\n", pNd->m_name, i);
 

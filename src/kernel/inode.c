@@ -183,6 +183,7 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
     {
         pNd = (struct NvmixDentry *)(pBh->b_data) + i;
 
+        // 留意 nvmixFindDentry() 中类似的部分，那里不能判断 pNd->m_ino == pInode->i_ino。这里可以，因为这里的 pDentry 与 pInode 已绑定好，是完整的。
         if ((0 != pNd->m_ino) && (pNd->m_ino == pInode->i_ino) && (0 == strcmp(pNd->m_name, pDentry->d_name.name)))
         {
             memset(pNd->m_name, 0, NVMIX_MAX_NAME_LENGTH);
@@ -412,7 +413,8 @@ struct NvmixDentry *nvmixFindDentry(struct dentry *pDentry, struct buffer_head *
     {
         pNd = (struct NvmixDentry *)(pBh->b_data) + i;
 
-        if ((0 != pNd->m_ino) && (pNd->m_ino == pDentry->d_inode->i_ino) && (0 == strcmp(pNd->m_name, pDentry->d_name.name)))
+        // 注意这个地方 pDentry 的语义。nvmixFindDentry() 在 nvmixLookup() 中使用，目的是给定目标 pDentry 找到磁盘的 NvmixDentry 结构。读 nvmixLookup() 的代码可知，此时 pDentry 尚未与 pInode 绑定，只有 pDentry->d_name 有值，pDentry->d_inode 是空指针 NULL，因此不能判断 pNd->m_ino == pDentry->d_inode->i_ino，否则会指针内存泄漏。切记！切记！
+        if ((0 != pNd->m_ino) && (0 == strcmp(pNd->m_name, pDentry->d_name.name)))
         {
             pr_info("nvmixfs: found entry %s on position: %d\n", pNd->m_name, i);
 

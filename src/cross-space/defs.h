@@ -1,7 +1,7 @@
 /**
  * @file defs.h
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief 本文件系统的全局宏和数据结构的头文件。
+ * @brief 本文件系统的全局宏、数据结构和变量的头文件。
  * @details 本文件定义了本文件系统必要的元数据，需要存储在磁盘上。注意与内存中 vfs 的数据结构区分开来，此文件的数据结构是本文件系统自己设计并且维护的。本文件需要被用户层程序 MkfsNvmixfs 引用，因此文件中不能放置任何内核 vfs 的数据结构或类型，例如 struct inode、struct buffer_head 等。但在实际过程中本文件系统的元数据结构显然是需要与 vfs 的数据结构打交道的，因此设计了辅助结构 NvmixSuperBlockHelper 和 NvmixInodeHelper 等。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
@@ -173,6 +173,18 @@ struct NvmixDentry
      */
     unsigned long m_ino;
 };
+
+
+/**
+ * @brief NVM 空间的起始物理地址。
+ * @details NVM 相关的变量会在内核模块加载时通过模块参数配置，但我不认为其与内核强相关，因此放在 cross-space。
+ */
+extern unsigned long nvmixNvmPhyAddr;
+
+/**
+ * @brief NVM 空间的大小。
+ */
+extern unsigned long nvmixNvmPhySize;
 
 
 NVMIX_EXTERN_C_END

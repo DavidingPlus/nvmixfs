@@ -15,8 +15,8 @@ static void *reservedMem = NULL;
 static __init int reservedMemoryInit(void)
 {
     int res = 0;
-    phys_addr_t phyAddr = 0x0000000100000000;
-    unsigned long size = 0x0000000010000000; // 256 M
+    phys_addr_t phyAddr = 0x100000000;
+    unsigned long size = 0x10000000; // 256 M
     unsigned int writeVal = 114514;
     unsigned int readVal1 = -1;
     unsigned int readVal2 = 0;

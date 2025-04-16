@@ -13,3 +13,5 @@
 unsigned long nvmixNvmPhyAddr = 0;
 
 unsigned long nvmixNvmPhySize = 0;
+
+void *nvmixNvmVirtAddr = NULL;

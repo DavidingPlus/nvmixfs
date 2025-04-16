@@ -27,4 +27,5 @@ TEST(DefsTest, NvmParamTest)
 {
     EXPECT_EQ(nvmixNvmPhyAddr, 0);
     EXPECT_EQ(nvmixNvmPhySize, 0);
+    EXPECT_EQ(nvmixNvmVirtAddr, nullptr);
 }

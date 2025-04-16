@@ -177,7 +177,7 @@ struct NvmixDentry
 
 /**
  * @brief NVM 空间的起始物理地址。
- * @details NVM 相关的变量会在内核模块加载时通过模块参数配置，但我不认为其与内核强相关，因此放在 cross-space。
+ * @details nvmixNvmPhyAddr 和 nvmixNvmPhySize 会在内核模块加载时通过模块参数配置，但我不认为其与内核强相关，因此放在 cross-space。
  */
 extern unsigned long nvmixNvmPhyAddr;
 
@@ -185,6 +185,11 @@ extern unsigned long nvmixNvmPhyAddr;
  * @brief NVM 空间的大小。
  */
 extern unsigned long nvmixNvmPhySize;
+
+/**
+ * @brief 映射 NVM 空间后的起始虚拟地址。
+ */
+extern void *nvmixNvmVirtAddr;
 
 
 NVMIX_EXTERN_C_END

@@ -32,4 +32,15 @@
 #endif
 
 
+/**
+ * @brief 定义宏 NULL。
+ * @details 由于 cross-space 中的代码没有办法使用 glibc 和内核的内置宏定义，因此这里手动定义。
+ */
+#ifndef NULL
+
+#define NULL ((void *)0)
+
+#endif
+
+
 #endif

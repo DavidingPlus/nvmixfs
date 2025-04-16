@@ -17,18 +17,37 @@ static __init int reservedMemoryInit(void)
     int res = 0;
     phys_addr_t physAddr = 0x0000000100000000;
     unsigned long size = 0x0000000010000000; // 256 M
+    unsigned int writeVal = 114514;
+    unsigned int readVal = 0;
+    int *pWrite = NULL;
+    int *pRead = NULL;
 
 
+    // 映射物理内存，使用回写缓存。
     reservedMem = memremap(physAddr, size, MEMREMAP_WB);
     if (!reservedMem)
     {
         pr_err("ReservedMemoryTest: failed to map reserved memory.\n");
 
-        res = -ENOMEM;
+        res = -EIO;
         goto ERR;
     }
 
     pr_info("ReservedMemoryTest: mapped reserved memory.\n");
+
+    // 写入测试值。
+    pWrite = (int *)reservedMem;
+    *pWrite = writeVal;
+
+    // 内存屏障，保证写入完成。
+    mb();
+
+    // 读取测试值验证。
+    pRead = (int *)reservedMem;
+    readVal = *pRead;
+
+    pr_info("ReservedMemoryTest: writeVal is %d, readVal is %d, writeVal == readVal is %d", writeVal, readVal, writeVal == readVal);
+
 
     pr_info("ReservedMemoryTest: module loaded successfully.\n");
 

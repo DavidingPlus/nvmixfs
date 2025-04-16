@@ -22,6 +22,10 @@ MODULE_DESCRIPTION("A Simple FileSystem for NVM and SSD Hybrid Storage");
 
 extern struct file_system_type nvmixFileSystemType;
 
+extern phys_addr_t nvmixNvmPhyAddr;
+
+extern unsigned long nvmixNvmPhySize;
+
 
 static int __init nvmixInit(void)
 {

@@ -15,7 +15,7 @@ static void *reservedMem = NULL;
 static __init int reservedMemoryInit(void)
 {
     int res = 0;
-    phys_addr_t physAddr = 0x0000000100000000;
+    phys_addr_t phyAddr = 0x0000000100000000;
     unsigned long size = 0x0000000010000000; // 256 M
     unsigned int writeVal = 114514;
     unsigned int readVal1 = -1;
@@ -26,7 +26,7 @@ static __init int reservedMemoryInit(void)
 
 
     // 映射物理内存，使用回写缓存。
-    reservedMem = memremap(physAddr, size, MEMREMAP_WB);
+    reservedMem = memremap(phyAddr, size, MEMREMAP_WB);
 
     memset(reservedMem, 0, size);
 

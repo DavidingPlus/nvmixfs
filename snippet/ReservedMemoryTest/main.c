@@ -18,13 +18,18 @@ static __init int reservedMemoryInit(void)
     phys_addr_t physAddr = 0x0000000100000000;
     unsigned long size = 0x0000000010000000; // 256 M
     unsigned int writeVal = 114514;
-    unsigned int readVal = 0;
+    unsigned int readVal1 = -1;
+    unsigned int readVal2 = 0;
     int *pWrite = NULL;
     int *pRead = NULL;
+    unsigned long offset = 108;
 
 
     // 映射物理内存，使用回写缓存。
     reservedMem = memremap(physAddr, size, MEMREMAP_WB);
+
+    memset(reservedMem, 0, size);
+
     if (!reservedMem)
     {
         pr_err("ReservedMemoryTest: failed to map reserved memory.\n");
@@ -36,7 +41,7 @@ static __init int reservedMemoryInit(void)
     pr_info("ReservedMemoryTest: mapped reserved memory.\n");
 
     // 写入测试值。
-    pWrite = (int *)reservedMem;
+    pWrite = (int *)((char *)reservedMem + offset);
     *pWrite = writeVal;
 
     // 内存屏障，保证写入完成。
@@ -44,9 +49,14 @@ static __init int reservedMemoryInit(void)
 
     // 读取测试值验证。
     pRead = (int *)reservedMem;
-    readVal = *pRead;
+    readVal1 = *pRead;
 
-    pr_info("ReservedMemoryTest: writeVal is %d, readVal is %d, writeVal == readVal is %d", writeVal, readVal, writeVal == readVal);
+    pr_info("ReservedMemoryTest: writeVal is %d, readVal1 is %d, writeVal == readVal1 is %d", writeVal, readVal1, writeVal == readVal1); // 114514, 0, false
+
+    pRead = (int *)((char *)reservedMem + offset);
+    readVal2 = *pRead;
+
+    pr_info("ReservedMemoryTest: writeVal is %d, readVal2 is %d, writeVal == readVal2 is %d", writeVal, readVal2, writeVal == readVal2); // 114514, 114514, true
 
 
     pr_info("ReservedMemoryTest: module loaded successfully.\n");

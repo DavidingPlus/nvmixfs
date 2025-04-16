@@ -10,13 +10,14 @@ MODULE_DESCRIPTION("A Simple Linux Kernel Module To Test Reserved Memory.");
 
 
 static void *reservedMem = NULL;
+static phys_addr_t phyAddr = 0x100000000;
+static unsigned long size = 0x10000000; // 256 M
 
 
 static __init int reservedMemoryInit(void)
 {
     int res = 0;
-    phys_addr_t phyAddr = 0x100000000;
-    unsigned long size = 0x10000000; // 256 M
+
     unsigned int writeVal = 114514;
     unsigned int readVal1 = -1;
     unsigned int readVal2 = 0;
@@ -27,9 +28,6 @@ static __init int reservedMemoryInit(void)
 
     // 映射物理内存，使用回写缓存。
     reservedMem = memremap(phyAddr, size, MEMREMAP_WB);
-
-    memset(reservedMem, 0, size);
-
     if (!reservedMem)
     {
         pr_err("ReservedMemoryTest: failed to map reserved memory.\n");
@@ -37,6 +35,9 @@ static __init int reservedMemoryInit(void)
         res = -EIO;
         goto ERR;
     }
+
+    // 初始化内存。
+    memset(reservedMem, 0, size);
 
     pr_info("ReservedMemoryTest: mapped reserved memory.\n");
 
@@ -68,13 +69,14 @@ ERR:
 
 static __exit void reservedMemoryExit(void)
 {
-    if (reservedMem)
-    {
-        memunmap(reservedMem);
+    // 清空内存。
+    memset(reservedMem, 0, size);
 
-        pr_info("ReservedMemoryTest: unmapped reserved memory.\n");
-    }
+    // 释放映射。
+    memunmap(reservedMem);
+    reservedMem = NULL;
 
+    pr_info("ReservedMemoryTest: unmapped reserved memory.\n");
 
     pr_info("ReservedMemoryTest: module unloaded successfully.\n");
 }

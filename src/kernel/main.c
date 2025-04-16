@@ -10,6 +10,7 @@
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/io.h>
 
 #include "config.h"
 
@@ -26,6 +27,8 @@ extern unsigned long nvmixNvmPhyAddr;
 
 extern unsigned long nvmixNvmPhySize;
 
+extern void *nvmixNvmVirtAddr;
+
 
 module_param(nvmixNvmPhyAddr, ulong, S_IRUGO);
 
@@ -37,6 +40,22 @@ static int __init nvmixInit(void)
     int res = 0;
 
 
+    // 映射物理内存，使用回写缓存。
+    nvmixNvmVirtAddr = memremap(nvmixNvmPhyAddr, nvmixNvmPhySize, MEMREMAP_WB);
+    if (!nvmixNvmVirtAddr)
+    {
+        pr_err("nvmixfs: failed to map reserved memory.\n");
+
+        res = -EIO;
+        goto ERR;
+    }
+
+    // 初始化内存。
+    memset(nvmixNvmVirtAddr, 0, nvmixNvmPhySize);
+
+    pr_info("nvmixfs: mapped reserved memory successfully.\n");
+
+    // 注册文件系统。
     res = register_filesystem(&nvmixFileSystemType);
     if (0 != res)
     {
@@ -57,6 +76,16 @@ static void __exit nvmixExit(void)
     int res = 0;
 
 
+    // 清空内存。
+    memset(nvmixNvmVirtAddr, 0, nvmixNvmPhySize);
+
+    // 释放映射。
+    memunmap(nvmixNvmVirtAddr);
+    nvmixNvmVirtAddr = NULL;
+
+    pr_info("nvmixfs: unmapped reserved memory successfully.\n");
+
+    // 注销文件系统。
     res = unregister_filesystem(&nvmixFileSystemType);
     if (0 != res)
     {

@@ -32,4 +32,16 @@
 #endif
 
 
+/**
+ * @brief 定义宏 NULL。
+ * @details 由于 cross-space 中的代码没有办法使用 glibc 和内核的内置宏定义，因此这里手动定义。
+ * @details 本来是打算给 nvmixNvmVirtAddr 用的，但是思考语义以后觉得还是将其放在内核相关的 NVM 模块中比较合适，但是 NULL 的这个定义比较优雅，故保留。
+ */
+#ifndef NULL
+
+#define NULL ((void *)0)
+
+#endif
+
+
 #endif

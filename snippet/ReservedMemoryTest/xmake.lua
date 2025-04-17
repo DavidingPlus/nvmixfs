@@ -1,0 +1,6 @@
+target ("ReservedMemoryTest")
+    add_rules ("platform.linux.module")
+    add_files ("*.c")
+    set_values ("linux.driver.linux-headers", "$(linux-headers)")
+    set_languages ("gnu99")
+    add_cflags ("-O1")

@@ -13,12 +13,18 @@ add_includedirs ("$(buildir)/config/")
 add_includedirs ("src/")
 add_includedirs ("src/cross-space/")
 add_includedirs ("src/kernel/")
+add_includedirs ("src/kernel/fs/")
+add_includedirs ("src/kernel/nvm/")
 
 
 target ("nvmixfs")
     add_rules ("platform.linux.module")
-    add_files ("src/kernel/*.c")
+
     add_files ("src/cross-space/*.c")
+    add_files ("src/kernel/*.c")
+    add_files ("src/kernel/fs/*.c")
+    add_files ("src/kernel/nvm/*.c")
+
     set_values ("linux.driver.linux-headers", "$(linux-headers)")
     set_languages ("gnu99")
     add_cflags ("-O1")

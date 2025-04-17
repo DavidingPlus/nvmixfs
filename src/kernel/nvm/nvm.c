@@ -1,13 +1,15 @@
 /**
- * @file defs.h
+ * @file nvm.c
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief 本文件系统的全局宏、数据结构和变量的源文件。
+ * @brief 存放 NVM 空间变量的源文件。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *
  */
 
-#include "defs.h"
+#include "nvm.h"
+
+#include <linux/stddef.h>
 
 
 unsigned long nvmixNvmPhyAddr = 0;

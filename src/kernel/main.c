@@ -18,7 +18,7 @@
 MODULE_VERSION(NVMIX_CONFIG_VERSION);
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("DavidingPlus");
-MODULE_DESCRIPTION("A Simple FileSystem for NVM and SSD Hybrid Storage");
+MODULE_DESCRIPTION("A Simple FileSystem for NVM and SSD Hybrid Storage.");
 
 
 extern struct file_system_type nvmixFileSystemType;
@@ -39,8 +39,10 @@ extern void *nvmixNvmVirtAddr;
  * @details 权限标志就是用户、组和其他是否可读、可写和可执行（八进制数）。常用组合：S_IRUGO 用户、组、其他均可读（S_IRUSR | S_IRGRP | S_IROTH），S_IWUSR 仅用户可写，S_IRUGO | S_IWUSR 所有人可读，仅用户可写。
  */
 module_param(nvmixNvmPhyAddr, ulong, S_IRUGO);
+MODULE_PARM_DESC(nvmixNvmPhyAddr, "Starting Physical Address Of NVM Space.");
 
 module_param(nvmixNvmPhySize, ulong, S_IRUGO);
+MODULE_PARM_DESC(nvmixNvmPhySize, "Size Of NVM Space.");
 
 
 static int __init nvmixInit(void)

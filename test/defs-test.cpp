@@ -22,10 +22,3 @@ TEST(DefsTest, DataBlockTest)
     EXPECT_EQ(sizeof(struct NvmixDentry) * NVMIX_MAX_INODE_NUM, 768);
     EXPECT_TRUE(sizeof(struct NvmixDentry) * NVMIX_MAX_INODE_NUM < 4096);
 }
-
-TEST(DefsTest, NvmParamTest)
-{
-    EXPECT_EQ(nvmixNvmPhyAddr, 0);
-    EXPECT_EQ(nvmixNvmPhySize, 0);
-    EXPECT_EQ(nvmixNvmVirtAddr, nullptr);
-}

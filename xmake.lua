@@ -1,5 +1,5 @@
 set_project ("nvmixfs")
-set_version ("1.0.1")
+set_version ("1.0.2")
 
 
 option ("linux-headers", {showmenu = true, description = "Set linux-headers path."})

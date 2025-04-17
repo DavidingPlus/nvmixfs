@@ -22,7 +22,7 @@
 
 # 具体设计
 
-（具体待补）
+（待补）
 
 super_block 区。
 
@@ -35,13 +35,15 @@ data 区以 4 KIB 为单位，每个文件或目录使用一个数据块，因�
 1. 不考虑 NVM，完成基于 DRAM + SSD 的传统文件系统的基本框架的搭建，留出数据结构和接口。初版只完成最简单的设计。
 2. 基本完成框架中预留接口的实现，已实现功能包括文件的创建、删除和修改，目录的创建和删除等。
 3. 按照 Doxygen 的风格补全注释。
+4. 使用持久性内存模拟 NVM 空间，将其映射到内核虚拟地址空间，并拿到虚拟起始地址用于管理。但目前尚未修改文件系统，只做了架构性的调研和思考。
 
 # 代办
 
-1. 引入 NVM 存储元数据。本毕设考虑使用内存模拟 NVM。
+1. 在 NVM 上部署元数据，修改文件系统的细节逻辑，完成收尾工作。
 
 # 参考文档
 
 1. [https://hanqi-blogs.cn/2024/linux%20kernel%20lab%20--%20Notes/](https://hanqi-blogs.cn/2024/linux%20kernel%20lab%20--%20Notes/)
 2. [https://github.com/linux-kernel-labs/linux/](https://github.com/linux-kernel-labs/linux/)
+3. [https://blog.csdn.net/qq_43845988/article/details/127018049](https://blog.csdn.net/qq_43845988/article/details/127018049)
 

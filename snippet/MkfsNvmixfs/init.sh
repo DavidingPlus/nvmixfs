@@ -3,12 +3,14 @@ set -e
 
 CURRENT_DIR="$(dirname "$(realpath "$0")")"
 
+KERNEL_HEADER_DIR="/usr/src/linux-headers-$(uname -r)/"
+
 
 $CURRENT_DIR/clear.sh
 
 cd $CURRENT_DIR/../../
 
-xmake f -m debug --linux-headers=/usr/src/linux-headers-5.4.0-214-generic/ --with-gtest=true
+xmake f -m debug --linux-headers="$KERNEL_HEADER_DIR" --with-gtest=true -y
 
 xmake build
 

@@ -19,6 +19,9 @@
 #include <linux/slab.h>
 
 
+extern void *nvmixNvmVirtAddr;
+
+
 /**
  * @brief 文件系统类型结构。
  */
@@ -170,6 +173,8 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     // 将超级块缓冲区指针传递给 NvmixSuperBlockHelper 存储起来，后续的很多操作都需要更新磁盘超级块的元数据内容。
     // 注意，既然传递指针存储起来了，那么正常流程下是不能使用 brelse() 释放 pBh 的。
     pNsbh->m_pBh = pBh;
+    pNsbh->m_superBlockVirtAddr = nvmixNvmVirtAddr + NVMIX_SUPER_BLOCK_OFFSET;
+    pNsbh->m_inodeVirtAddr = nvmixNvmVirtAddr + NVMIX_INODE_BLOCK_OFFSET;
 
 
     return res;
@@ -199,6 +204,7 @@ void nvmixPutSuper(struct super_block *pSb)
 
     // 标记缓冲区为脏，表示内容已被修改，需要写回磁盘。
     mark_buffer_dirty(pNsbh->m_pBh);
+
     // 释放缓冲区头。
     brelse(pNsbh->m_pBh);
     pNsbh->m_pBh = NULL;

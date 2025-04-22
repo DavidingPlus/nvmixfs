@@ -27,6 +27,16 @@ struct NvmixSuperBlockHelper
      * @brief 磁盘上超级块区的缓冲区指针。
      */
     struct buffer_head *m_pBh;
+
+    /**
+     * @brief NVM 空间上超级块的虚拟地址。
+     */
+    void *m_superBlockVirtAddr;
+
+    /**
+     * @brief NVM 空间上 inode 区的虚拟地址。
+     */
+    void *m_inodeVirtAddr;
 };
 
 

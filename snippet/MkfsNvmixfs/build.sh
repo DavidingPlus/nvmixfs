@@ -1,13 +1,10 @@
 #!/bin/bash
 
-# 遇到错误立即退出
+# 遇到错误立即退出。
 set -e
 
 
-# 绿色 INFO 日志输出
-log() {
-    echo -e "[\033[1;32mINFO\033[0m] $*"
-}
+source "$(dirname "$0")/log.sh"
 
 
 CURRENT_DIR="$(dirname "$(realpath "$0")")"

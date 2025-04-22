@@ -154,6 +154,7 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
     struct NvmixDentry *pNd = NULL;
     struct NvmixSuperBlockHelper *pNsbh = NULL;
     struct NvmixSuperBlock *pNsb = NULL;
+    struct NvmixSuperBlock *pNvmNsbh = NULL;
     int i = 0;
     int res = 0;
 
@@ -200,8 +201,10 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
     // 磁盘上超级块区的缓冲区指针一直存在于内存中，被 NvmixSuperBlockHelper 维护，不需要手动创建和释放。
     pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
     pNsb = (struct NvmixSuperBlock *)(pNsbh->m_pBh->b_data);
+    pNvmNsbh = (struct NvmixSuperBlock *)(pNsbh->m_superBlockVirtAddr);
 
     test_and_clear_bit(pInode->i_ino, &pNsb->m_imap);
+    test_and_clear_bit(pInode->i_ino, &pNvmNsbh->m_imap);
 
     pr_info("nvmixfs: m_imap in nvmixUnlink(): %ld\n", pNsb->m_imap);
 

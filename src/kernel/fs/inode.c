@@ -305,7 +305,10 @@ struct inode *nvmixNewInode(struct inode *pParentDirInode)
     pr_info("nvmixfs: m_imap in nvmixNewInode(): %ld\n", pNsb->m_imap);
 
 
-    pInode = new_inode(pSb); // 此函数创建新的 inode 结构，并关联到文件系统的超级块。
+    // 此函数创建新的 inode 结构，并关联到文件系统的超级块。
+    // 查看源码后发现 new_inode() 最终会调用 super_operations 的 alloc_inode 函数，此函数我们自己定义。
+    // 本项目中即 nvmixAllocInode 函数，创建 NvmixInodeHelper 结构并返回成员 vfs_inode，所以 pInode 是和 NvmixInodeHelper 强绑定的，这才意味着 NVMIX_I 宏函数才能生效。
+    pInode = new_inode(pSb);
 
     // 初始化通用 vfs inode 的一些信息。
     // 注意，本函数返回的可能是文件或目录的 inode，这二者的 inode 中需要填充不同项的内容。但 nvmixNewInode() 的语义是创建一个通用 inode，故只处理通用的部分，这些赋值只能放在这里而不能放在外层的 nvmixCreate() 或 nvmixMkdir() 中。
@@ -491,7 +494,9 @@ int nvmixMknod(struct inode *pParentDirInode, struct dentry *pDentry, umode_t mo
 
     // dentry 作用是关联 inode 和文件名。d_instantiate() 将 dentry 与 inode 绑定，使文件名正确指向文件。
     d_instantiate(pDentry, pInode);
-    // 标记 inode 为脏，表示其元数据（如权限、大小）或数据已修改，需后续同步到磁盘。
+    // 标记 inode 为脏，表示其元数据（如权限、大小）或数据已修改，后续内核会通过回写机制将修改同步到磁盘。
+    // 问题来了，内核怎么知道 inode 区的逻辑块号，或者整个流程是怎样的？
+    // 答案是内核会通过 super_operations 的 write_inode 函数（本项目中即 nvmixWriteInode）进行回写，在那里面定义了完整的逻辑，这里只是起一个标记的作用。
     mark_inode_dirty(pInode);
 
     pr_info("nvmixfs: created new inode successfully, ino = %lu\n", pInode->i_ino);

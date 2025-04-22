@@ -278,7 +278,7 @@ int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
 
     // inode 区存储的是 NvmixInode 数组，也需要偏移。获取地址的逻辑同 dir.c 中 nvmixReaddir()。
     pNi = (struct NvmixInode *)(pBh->b_data) + pInode->i_ino;
-    // pNi = pNsbh->m_inodeVirtAddr + pInode->i_ino;
+    // pNi = (struct NvmixInode *)(pNsbh->m_inodeVirtAddr) + pInode->i_ino;
 
 
     pNi->m_mode = pInode->i_mode;
@@ -349,7 +349,7 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
     pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
 
     pNi = (struct NvmixInode *)(pBh->b_data) + ino;
-    // pNi = pNsbh->m_inodeVirtAddr + ino;
+    // pNi = (struct NvmixInode *)(pNsbh->m_inodeVirtAddr) + ino;
 
     pInode->i_mode = pNi->m_mode;
     i_uid_write(pInode, pNi->m_uid);

@@ -154,7 +154,6 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
     struct NvmixDentry *pNd = NULL;
     struct NvmixSuperBlockHelper *pNsbh = NULL;
     struct NvmixSuperBlock *pNsb = NULL;
-    struct NvmixSuperBlock *pNvmNsbh = NULL;
     int i = 0;
     int res = 0;
 
@@ -201,10 +200,9 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
     // 磁盘上超级块区的缓冲区指针一直存在于内存中，被 NvmixSuperBlockHelper 维护，不需要手动创建和释放。
     pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
     pNsb = (struct NvmixSuperBlock *)(pNsbh->m_pBh->b_data);
-    pNvmNsbh = (struct NvmixSuperBlock *)(pNsbh->m_superBlockVirtAddr);
+    // pNsb = (struct NvmixSuperBlock *)(pNsbh->m_superBlockVirtAddr);
 
     test_and_clear_bit(pInode->i_ino, &pNsb->m_imap);
-    test_and_clear_bit(pInode->i_ino, &pNvmNsbh->m_imap);
 
     pr_info("nvmixfs: m_imap in nvmixUnlink(): %ld\n", pNsb->m_imap);
 
@@ -288,6 +286,7 @@ struct inode *nvmixNewInode(struct inode *pParentDirInode)
     pSb = pParentDirInode->i_sb;
     pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info); // pSb->s_fs_info 含义解释见 fs.c。
     pNsb = (struct NvmixSuperBlock *)(pNsbh->m_pBh->b_data);
+    // pNsb = (struct NvmixSuperBlock *)(pNsbh->m_superBlockVirtAddr);
 
     // find_first_zero_bit() 是内核提供的一个位图操作函数，其作用是从给定的位图中查找第一个值为 0 的位，即未使用的空闲资源。m_imap 是我们自己定义的管理 inode 分配状态的位图信息，类型是 unsigned long，8 个字节，64 位。对本文件系统而言，使用低 32 位，每一位用于标识分配状态。
     index = find_first_zero_bit(&pNsb->m_imap, NVMIX_MAX_INODE_NUM);

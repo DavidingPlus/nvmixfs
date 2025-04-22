@@ -211,19 +211,20 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
     pr_info("nvmixfs: unlinked file successfully.\n");
 
 
-    // 释放目录项的引用。
-    dput(pDentry);
-
     // 减少文件的硬链接数。
     // inode_dec_link_count 先后调用 drop_nlink 和 mark_inode_dirty，逻辑更加完整，优先考虑这个函数。
     inode_dec_link_count(pInode);
+
+    // 释放目录项 dentry 的引用计数。
+    // 当调用 dput(pDentry) 时，如果 dentry 的引用计数（d_count）降为 0，内核会尝试释放该 dentry，并调用 iput() 减少 inode 的引用计数（i_count）。所以下面再调用 iput() 极可能会出现重复调用 iput() 导致内存泄漏进而导致内核崩溃的问题。
+    dput(pDentry);
 
     // iput() 是内核提供的函数，用于减少对 inode 的引用计数。
     // inode 的 i_count 表示内核中对该 inode 的活跃引用（如被打开的文件、dentry 缓存等）。调用 iput() 会原子地减少 i_count，并检查是否需要释放 inode。
     // 如果 i_count 降为 0，且 i_nlink（硬链接数）也为 0（表示没有目录项指向该 inode），则会调用 evict_inode() 清理 inode 数据（如释放磁盘空间、清除页面缓存），最终会调用 super_operations 的 destroy_inode 函数，释放 inode 内存。
     // i_nlink（硬链接数），表示磁盘上目录项的数量。
     // i_count（引用计数），表示内核中活跃的 inode 引用。
-    iput(pInode);
+    // iput(pInode); // 这一行千万不要加。。。
 
 
 ERR:

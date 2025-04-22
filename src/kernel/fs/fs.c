@@ -30,7 +30,8 @@ struct file_system_type nvmixFileSystemType = {
     .name = "nvmixfs",
     .mount = nvmixMount,
     .kill_sb = nvmixKillSb,
-    .fs_flags = FS_REQUIRES_DEV, // 表示本系统是基于块设备的文件系统。
+    // 表示本系统是基于块设备的文件系统。
+    .fs_flags = FS_REQUIRES_DEV,
 };
 
 /**
@@ -169,8 +170,7 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     {
         pr_err("nvmixfs: error when running function d_make_root().\n");
 
-        // iput() 是 Linux 内核中的一个函数，用于释放对 inode 的引用。
-        // 在初始化根目录失败时（如 d_make_root() 失败），需手动调用 iput() 释放通过 nvmixIget() 获取的根 inode 的引用。
+        // 在初始化根目录失败时（如 d_make_root() 失败），需手动调用 iput() 减少通过 nvmixIget() 获取的根 inode 的引用计数。
         iput(pRootDirInode);
 
         res = -EINVAL;

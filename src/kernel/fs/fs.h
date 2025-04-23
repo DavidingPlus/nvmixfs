@@ -17,17 +17,11 @@
 
 
 /**
- * @struct NvmixSuperBlockHelper
- * @brief 内核 vfs 通过 NvmixSuperBlockHelper 结构的 m_pBh 缓存区指针与磁盘上的 NvmixSuperBlock 建立联系。
- * @details 这个指针在 fill_super() 函数中被初始化，然后就没有释放过。记录这个指针是为了在操作文件系统的时候能够及时更新超级块区的信息。这是不可避免的。包装一层是为了语义和美观。
+ * @struct NvmixNvmHelper
+ * @brief 辅助结构，存储 NVM 空间超级块和 inode 区的映射虚拟起始地址。
  */
-struct NvmixSuperBlockHelper
+struct NvmixNvmHelper
 {
-    /**
-     * @brief 磁盘上超级块区的缓冲区指针。
-     */
-    struct buffer_head *m_pBh;
-
     /**
      * @brief NVM 空间上超级块的虚拟地址。
      */

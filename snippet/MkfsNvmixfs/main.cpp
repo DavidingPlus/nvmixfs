@@ -2,7 +2,9 @@
 #include <cstring>
 
 #include <sys/stat.h>
-#include <linux/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
 
 #include "config.h"
 
@@ -11,77 +13,109 @@
 
 int main(int argc, char const *argv[])
 {
-    FILE *file = NULL;
-    char buffer[NVMIX_BLOCK_SIZE] = {0};
-    struct NvmixSuperBlock msb;
-    struct NvmixInode rootDirInode;
-    struct NvmixInode fileInode;
-    struct NvmixDentry fileDentry;
-    int i = 0;
-
-    if (2 != argc)
+    if (4 != argc)
     {
-        std::cerr << "Usage: " << argv[0] << " block_device_name\n";
+        std::cerr << "Error: Invalid arguments.\n"
+                  << "Usage: " << argv[0]
+                  << " <nvm-device-path> <nvm-size-bytes> <ssd-device-path>\n"
+                  << "  <nvm-device-path>     Path to persistent memory device (e.g. /dev/pmem0)\n"
+                  << "  <nvm-size-bytes> Size of NVM space in bytes (e.g. 1048576 for 1MB)\n"
+                  << "  <ssd-device-path>     Path to SSD block device (e.g. /dev/sdb2)\n";
 
-        exit(EXIT_FAILURE);
+
+        return EXIT_FAILURE;
     }
 
-    file = fopen(argv[1], "w+");
-    if (file == NULL)
-    {
-        perror("fopen");
 
-        exit(EXIT_FAILURE);
+    // 写入元数据。
+    int nvmFd = open(argv[1], O_RDWR);
+    if (-1 == nvmFd)
+    {
+        perror("open");
+
+
+        return EXIT_FAILURE;
     }
 
-    memset(&msb, 0, sizeof(struct NvmixSuperBlock));
+    void *nvmVirtAddr = mmap(NULL, std::atoi(argv[2]), PROT_READ | PROT_WRITE, MAP_SHARED, nvmFd, 0);
+    if (MAP_FAILED == nvmVirtAddr)
+    {
+        perror("mmap");
 
-    msb.m_magic = NVMIX_MAGIC_NUMBER;
+        close(nvmFd);
 
-    msb.m_version.m_major = NVMIX_CONFIG_VERSION_MAJOR;
-    msb.m_version.m_minor = NVMIX_CONFIG_VERSION_MINOR;
-    msb.m_version.m_alter = NVMIX_CONFIG_VERSION_ALTER;
 
-    // 直接访问块设备就不会走 vfs 这一层了，所以初始化的时候 m_imap 需要考虑 a.txt，写为 3 而不是 1。
-    msb.m_imap = 0x03;
+        return EXIT_FAILURE;
+    }
 
-    // zero disk
-    memset(buffer, 0, NVMIX_BLOCK_SIZE);
-    for (i = 0; i < 128; i++) fwrite(buffer, 1, NVMIX_BLOCK_SIZE, file);
 
-    fseek(file, 0, SEEK_SET);
+    NvmixSuperBlock nsb = {
+        .m_magic = NVMIX_MAGIC_NUMBER,
+        // 直接访问块设备就不会走 vfs 这一层了，所以初始化的时候 m_imap 需要考虑 a.txt，写为 3 而不是 1。
+        .m_imap = 0x03,
+        .m_version = NvmixVersion{
+            .m_major = NVMIX_CONFIG_VERSION_MAJOR,
+            .m_minor = NVMIX_CONFIG_VERSION_MINOR,
+            .m_alter = NVMIX_CONFIG_VERSION_ALTER,
+        },
+    };
 
-    // initialize super block
-    fwrite(&msb, sizeof(msb), 1, file);
+    NvmixSuperBlock *superBlockVirtAddr = (NvmixSuperBlock *)((char *)nvmVirtAddr + NVMIX_SUPER_BLOCK_OFFSET);
 
-    // initialize root inode
-    memset(&rootDirInode, 0, sizeof(rootDirInode));
-    rootDirInode.m_uid = 0;
-    rootDirInode.m_gid = 0;
-    rootDirInode.m_mode = S_IFDIR | 0755;
-    rootDirInode.m_size = 0;
-    rootDirInode.m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX;
+    *superBlockVirtAddr = nsb;
+    msync(superBlockVirtAddr, sizeof(NvmixSuperBlock), MS_SYNC);
 
-    fseek(file, NVMIX_INODE_BLOCK_INDEX * NVMIX_BLOCK_SIZE, SEEK_SET);
-    fwrite(&rootDirInode, sizeof(rootDirInode), 1, file);
 
-    // initialize new inode
-    memset(&fileInode, 0, sizeof(fileInode));
-    fileInode.m_uid = 0;
-    fileInode.m_gid = 0;
-    fileInode.m_mode = S_IFREG | 0644;
-    fileInode.m_size = 0;
-    fileInode.m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + 1;
-    fwrite(&fileInode, sizeof(fileInode), 1, file);
+    NvmixInode rootDirInode = {
+        .m_mode = S_IFDIR | 0755,
+        .m_uid = 0,
+        .m_gid = 0,
+        .m_size = 0,
+        .m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX,
+    };
 
-    // add dentry information
-    memset(&fileDentry, 0, sizeof(fileDentry));
-    fileDentry.m_ino = 1;
-    memcpy(fileDentry.m_name, "a.txt", 5);
-    fseek(file, NVMIX_FIRST_DATA_BLOCK_INDEX * NVMIX_BLOCK_SIZE, SEEK_SET);
-    fwrite(&fileDentry, sizeof(fileDentry), 1, file);
+    NvmixInode fileInode = {
+        .m_mode = S_IFDIR | 0664,
+        .m_uid = 0,
+        .m_gid = 0,
+        .m_size = 0,
+        .m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + 1,
+    };
 
-    fclose(file);
+    NvmixInode *inodeVirtAddr = (NvmixInode *)((char *)nvmVirtAddr + NVMIX_INODE_BLOCK_OFFSET);
+
+    *inodeVirtAddr = rootDirInode;
+    msync(inodeVirtAddr, sizeof(NvmixInode), MS_SYNC);
+
+    *(inodeVirtAddr + 1) = fileInode;
+    msync(inodeVirtAddr + 1, sizeof(NvmixSuperBlock), MS_SYNC);
+
+    munmap(nvmVirtAddr, std::atoi(argv[2]));
+
+    close(nvmFd);
+
+
+    // 写入 SSD 上的目录项数据。
+    int ssdFd = open(argv[3], O_RDWR);
+    if (-1 == ssdFd)
+    {
+        perror("open");
+
+
+        return EXIT_FAILURE;
+    }
+
+    NvmixDentry fileDentry = {
+        .m_ino = 1,
+    };
+    strcpy(fileDentry.m_name, "a.txt");
+
+
+    lseek(ssdFd, NVMIX_FIRST_DATA_BLOCK_INDEX * NVMIX_BLOCK_SIZE, SEEK_SET);
+
+    write(ssdFd, &fileDentry, sizeof(NvmixDentry));
+
+    close(ssdFd);
 
 
     return 0;

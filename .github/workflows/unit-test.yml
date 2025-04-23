@@ -1,12 +1,14 @@
 name: Unit Test
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "**"
     tags:
       - "v*"
-  workflow_dispatch:
+  schedule:
+    - cron: 0 4 * * *
 
 jobs:
   unit-test:

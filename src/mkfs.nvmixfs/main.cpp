@@ -1,3 +1,12 @@
+/**
+ * @file main.cpp
+ * @author DavidingPlus (davidingplus@qq.com)
+ * @brief 格式化 nvmixfs 文件系统的用户层程序。
+ *
+ * Copyright (c) 2025 电子科技大学 刘治学
+ *
+ */
+
 #include <iostream>
 #include <cstring>
 
@@ -26,10 +35,12 @@ int main(int argc, char const *argv[])
         return EXIT_FAILURE;
     }
 
+
     const char *nvmDevicePath = argv[1];
     const char *ssdDevicePath = argv[3];
     unsigned long nvmPhySize = 0;
 
+    // 将字符串表示的十六进制数字转化为 unsigned long 类型的十进制数。
     try
     {
         nvmPhySize = std::stoi(argv[2], nullptr, 16);
@@ -50,6 +61,7 @@ int main(int argc, char const *argv[])
         return EXIT_FAILURE;
     }
 
+    // 具体映射逻辑见 snippet/PmemTest/main.cpp，使用 mmap 映射到用户态内存中，并通过 msync() 保证同步。
     void *nvmVirtAddr = mmap(NULL, nvmPhySize, PROT_READ | PROT_WRITE, MAP_SHARED, nvmFd, 0);
     if (MAP_FAILED == nvmVirtAddr)
     {
@@ -61,10 +73,9 @@ int main(int argc, char const *argv[])
         return EXIT_FAILURE;
     }
 
-
-    NvmixSuperBlock nsb = {
+    NvmixSuperBlock superBlock = {
         .m_magic = NVMIX_MAGIC_NUMBER,
-        // 直接访问块设备就不会走 vfs 这一层了，所以初始化的时候 m_imap 需要考虑 a.txt，写为 3 而不是 1。
+        // 直接访问块设备就不会走 vfs 这一层了，所以初始化的时候 m_imap 需要考虑 reserved.txt（为了测试预先保留在本文件系统中的文件），写为 3 而不是 1。
         .m_imap = 0x03,
         .m_version = NvmixVersion{
             .m_major = NVMIX_CONFIG_VERSION_MAJOR,
@@ -75,9 +86,9 @@ int main(int argc, char const *argv[])
 
     NvmixSuperBlock *superBlockVirtAddr = (NvmixSuperBlock *)((char *)nvmVirtAddr + NVMIX_SUPER_BLOCK_OFFSET);
 
-    *superBlockVirtAddr = nsb;
+    *superBlockVirtAddr = superBlock;
+    // 写操作在用户层通过 msync 同步，在内核层通过 clflush_cache_range 同步。
     msync(superBlockVirtAddr, sizeof(NvmixSuperBlock), MS_SYNC);
-
 
     NvmixInode rootDirInode = {
         .m_mode = S_IFDIR | 0755,
@@ -92,16 +103,19 @@ int main(int argc, char const *argv[])
         .m_uid = 0,
         .m_gid = 0,
         .m_size = 0,
-        .m_dataBlockIndex = NVMIX_FIRST_DATA_BLOCK_INDEX + 1,
+        .m_dataBlockIndex = 1 + NVMIX_FIRST_DATA_BLOCK_INDEX,
     };
 
     NvmixInode *inodeVirtAddr = (NvmixInode *)((char *)nvmVirtAddr + NVMIX_INODE_BLOCK_OFFSET);
+    NvmixInode *rootDirInodeVirtAddr = inodeVirtAddr;
+    NvmixInode *fileInodeVirtAddr = inodeVirtAddr + 1;
 
-    *inodeVirtAddr = rootDirInode;
-    msync(inodeVirtAddr, sizeof(NvmixInode), MS_SYNC);
+    *rootDirInodeVirtAddr = rootDirInode;
+    msync(rootDirInodeVirtAddr, sizeof(NvmixInode), MS_SYNC);
 
-    *(inodeVirtAddr + 1) = fileInode;
-    msync(inodeVirtAddr + 1, sizeof(NvmixInode), MS_SYNC);
+    *fileInodeVirtAddr = fileInode;
+    msync(fileInodeVirtAddr, sizeof(NvmixInode), MS_SYNC);
+
     munmap(nvmVirtAddr, nvmPhySize);
 
     close(nvmFd);
@@ -119,6 +133,7 @@ int main(int argc, char const *argv[])
 
     // 将本文件系统管理的所有数据块清空。
     const char zeroBuf[NVMIX_BLOCK_SIZE] = {0};
+
     // write() 执行以后文件偏移量会自动往后移，因此不用手动设置。
     for (int i = 0; i < NVMIX_MAX_INODE_NUM; ++i) write(nvmFd, zeroBuf, sizeof(zeroBuf));
 
@@ -126,7 +141,7 @@ int main(int argc, char const *argv[])
     NvmixDentry fileDentry = {
         .m_ino = 1,
     };
-    strcpy(fileDentry.m_name, "a.txt");
+    strcpy(fileDentry.m_name, "reserved.txt");
 
 
     lseek(ssdFd, NVMIX_FIRST_DATA_BLOCK_INDEX * NVMIX_BLOCK_SIZE, SEEK_SET);

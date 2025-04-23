@@ -139,8 +139,8 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     pNsbh->m_superBlockVirtAddr = nvmixNvmVirtAddr + NVMIX_SUPER_BLOCK_OFFSET;
     pNsbh->m_inodeVirtAddr = nvmixNvmVirtAddr + NVMIX_INODE_BLOCK_OFFSET;
 
-    pNsb = (struct NvmixSuperBlock *)(pBh->b_data);
-    // pNsb = (struct NvmixSuperBlock *)(pNsbh->m_superBlockVirtAddr);
+    // pNsb = (struct NvmixSuperBlock *)(pBh->b_data);
+    pNsb = (struct NvmixSuperBlock *)(pNsbh->m_superBlockVirtAddr);
 
     // 校验魔数。
     if (NVMIX_MAGIC_NUMBER != pNsb->m_magic)
@@ -277,8 +277,8 @@ int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
     pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
 
     // inode 区存储的是 NvmixInode 数组，也需要偏移。获取地址的逻辑同 dir.c 中 nvmixReaddir()。
-    pNi = (struct NvmixInode *)(pBh->b_data) + pInode->i_ino;
-    // pNi = (struct NvmixInode *)(pNsbh->m_inodeVirtAddr) + pInode->i_ino;
+    // pNi = (struct NvmixInode *)(pBh->b_data) + pInode->i_ino;
+    pNi = (struct NvmixInode *)(pNsbh->m_inodeVirtAddr) + pInode->i_ino;
 
 
     pNi->m_mode = pInode->i_mode;
@@ -348,8 +348,8 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
 
     pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
 
-    pNi = (struct NvmixInode *)(pBh->b_data) + ino;
-    // pNi = (struct NvmixInode *)(pNsbh->m_inodeVirtAddr) + ino;
+    // pNi = (struct NvmixInode *)(pBh->b_data) + ino;
+    pNi = (struct NvmixInode *)(pNsbh->m_inodeVirtAddr) + ino;
 
     pInode->i_mode = pNi->m_mode;
     i_uid_write(pInode, pNi->m_uid);

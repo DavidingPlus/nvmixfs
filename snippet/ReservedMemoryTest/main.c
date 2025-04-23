@@ -1,6 +1,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/io.h>
+#include <asm/cacheflush.h>
 
 
 MODULE_VERSION("1.0.0");
@@ -45,11 +46,40 @@ static __init int reservedMemoryInit(void)
     pWrite = (int *)((char *)reservedMem + offset);
     *pWrite = writeVal;
 
+    /*
+     * 调用 clflush_cache_range 刷新指定地址的 CPU 缓存：
+     * - addr: 要刷新的虚拟地址（需确保在映射范围内）。
+     * - size: 刷新的字节数（实际会按缓存行对齐扩展范围）。
+     *
+     * 函数内部已通过 mb() 屏障确保：
+     * 1. 刷新前所有内存操作已完成（防止重排到刷新前）。
+     * 2. 刷新操作本身顺序性（CLFLUSHOPT 是弱序指令）。
+     * 3. 刷新后屏障保证后续操作不会重排到刷新前。
+     *
+     * 适用于需确保数据从 CPU 缓存刷回物理内存的场景（如持久化内存操作）。
+     * 注意：地址 addr 应尽量对齐到缓存行（64 字节）以提升性能。
+     * void clflush_cache_range(void *vaddr, unsigned int size)
+     * {
+     *     mb();
+     *     clflush_cache_range_opt(vaddr, size);
+     *     mb();
+     * }
+     * EXPORT_SYMBOL_GPL(clflush_cache_range);
+     */
+    clflush_cache_range(pWrite, sizeof(int));
+
+    // 这两句是老代码，可以注释掉了。
+
     // 将数据将 CPU 缓存刷回内存。
-    clflush(pWrite);
+    // clflush：将缓存行从所有层级的缓存中逐出并写回内存，之后该缓存行标记为无效。缓存行被无效化（后续访问需重新加载）。
+    // clwb：将缓存行写回内存，但保留缓存行有效（保持数据在缓存中）。缓存行保持有效（可被后续访问复用）。
+    // clflush(pWrite);
 
     // 内存屏障，保证写入完成。
-    wmb();
+    // wmb：写操作顺序。确保屏障之前的所有写操作在屏障之后的写操作之前完成。
+    // rmb：读操作顺序。确保屏障之前的所有读操作在屏障之后的读操作之前完成。
+    // mb：读写操作顺序。确保屏障之前的所有读写操作在屏障之后的读写操作之前完成。
+    // wmb();
 
     // 读取测试值验证。
     pRead = (int *)reservedMem;

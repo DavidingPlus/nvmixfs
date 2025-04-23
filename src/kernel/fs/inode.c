@@ -35,6 +35,7 @@ struct inode_operations nvmixDirInodeOps = {
     .rmdir = nvmixRmdir,
 };
 
+
 extern struct file_operations nvmixFileFileOps;
 
 extern struct file_operations nvmixDirFileOps;

@@ -1,5 +1,5 @@
 /**
- * @file fs.c
+ * @file fs.h
  * @author DavidingPlus (davidingplus@qq.com)
  * @brief 文件系统类型结构和超级块操作头文件。
  *
@@ -23,12 +23,12 @@
 struct NvmixNvmHelper
 {
     /**
-     * @brief NVM 空间上超级块的虚拟地址。
+     * @brief NVM 空间上超级块的起始虚拟地址。
      */
     void *m_superBlockVirtAddr;
 
     /**
-     * @brief NVM 空间上 inode 区的虚拟地址。
+     * @brief NVM 空间上 inode 区的起始虚拟地址。
      */
     void *m_inodeVirtAddr;
 };

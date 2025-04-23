@@ -12,6 +12,7 @@
 #define _NVMIX_UTIL_H_
 
 #include "globalmacros.h"
+
 #include "defs.h"
 
 

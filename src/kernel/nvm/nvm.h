@@ -1,7 +1,7 @@
 /**
  * @file nvm.h
  * @author DavidingPlus (davidingplus@qq.com)
- * @brief 存放 NVM 空间变量的头文件。
+ * @brief 存放 NVM 空间的变量的头文件。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *
@@ -13,7 +13,7 @@
 
 /**
  * @brief NVM 空间的起始物理地址。
- * @details nvmixNvmPhyAddr 和 nvmixNvmPhySize 会在内核模块加载时通过模块参数配置。
+ * @details nvmixNvmPhyAddr 和 nvmixNvmPhySize 会在内核模块加载时通过内核模块参数进行配置。
  */
 extern unsigned long nvmixNvmPhyAddr;
 

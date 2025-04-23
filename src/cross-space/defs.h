@@ -2,7 +2,7 @@
  * @file defs.h
  * @author DavidingPlus (davidingplus@qq.com)
  * @brief 本文件系统的全局宏和数据结构的头文件。
- * @details 本文件定义了本文件系统必要的元数据，需要存储在磁盘上。注意与内存中 vfs 的数据结构区分开来，此文件的数据结构是本文件系统自己设计并且维护的。本文件需要被用户层程序 MkfsNvmixfs 引用，因此文件中不能放置任何内核 vfs 的数据结构或类型，例如 struct inode、struct buffer_head 等。但在实际过程中本文件系统的元数据结构显然是需要与 vfs 的数据结构打交道的，因此设计了辅助结构 NvmixSuperBlockHelper 和 NvmixInodeHelper 等。
+ * @details 本文件定义了本文件系统必要的元数据，需要存储在磁盘上。注意与内存中 vfs 的数据结构区分开来，此文件的数据结构是本文件系统自己设计并且维护的。本文件需要被用户层程序 MkfsNvmixfs 引用，因此文件中不能放置任何内核 vfs 的数据结构或类型，例如 struct inode、struct buffer_head 等。但在实际过程中本文件系统的元数据结构显然是需要与 vfs 的数据结构打交道的，因此设计了辅助结构 NvmixNvmHelper 和 NvmixInodeHelper 等。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *
@@ -34,20 +34,9 @@ NVMIX_EXTERN_C_BEGIN
 #define NVMIX_BLOCK_SIZE 4096
 
 /**
- * @brief 超级块的逻辑块号。
- * @details 逻辑块号的值是相对于文件系统的起始位置，下面的 inode 和起始数据块同理。
- */
-#define NVMIX_SUPER_BLOCK_INDEX 0
-
-/**
  * @brief 超级块区在 NVM 空间上的偏移量。
  */
 #define NVMIX_SUPER_BLOCK_OFFSET 0
-
-/**
- * @brief inode 区的逻辑块号。
- */
-#define NVMIX_INODE_BLOCK_INDEX 1
 
 /**
  * @brief inode 区在 NVM 空间上的偏移量。
@@ -57,7 +46,7 @@ NVMIX_EXTERN_C_BEGIN
 /**
  * @brief 起始数据块的逻辑块号。
  */
-#define NVMIX_FIRST_DATA_BLOCK_INDEX 2
+#define NVMIX_FIRST_DATA_BLOCK_INDEX 0
 
 /**
  * @brief 文件系统最多的 inode 数量。

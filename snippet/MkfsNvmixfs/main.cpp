@@ -101,8 +101,7 @@ int main(int argc, char const *argv[])
     msync(inodeVirtAddr, sizeof(NvmixInode), MS_SYNC);
 
     *(inodeVirtAddr + 1) = fileInode;
-    msync(inodeVirtAddr + 1, sizeof(NvmixSuperBlock), MS_SYNC);
-
+    msync(inodeVirtAddr + 1, sizeof(NvmixInode), MS_SYNC);
     munmap(nvmVirtAddr, nvmPhySize);
 
     close(nvmFd);

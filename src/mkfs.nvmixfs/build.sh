@@ -25,9 +25,6 @@ $CURRENT_DIR/clear.sh
 log "切换到项目根目录..."
 cd "$CURRENT_DIR/../../"
 
-log "创建构建标志文件 .buildme（若已存在则跳过）..."
-touch "$CURRENT_DIR/.buildme"
-
 log "配置 xmake 构建参数..."
 xmake f -m debug --linux-headers="$KERNEL_HEADER_DIR" --with-gtest=true -y
 
@@ -43,7 +40,7 @@ log "使用的物理地址: $NVM_PHY_ADDR, 大小: $NVM_PHY_SIZE"
 sudo insmod "$CURRENT_DIR/../../build/linux/x86_64/debug/bin/nvmixfs.ko" nvmixNvmPhyAddr=$NVM_PHY_ADDR nvmixNvmPhySize=$NVM_PHY_SIZE
 
 log "使用 mkfs.nvmixfs 格式化设备 /dev/pmem0 和 /dev/sdb2..."
-sudo "$CURRENT_DIR/../../build/linux/x86_64/debug/snippet/mkfs.nvmixfs" /dev/pmem0 $NVM_PHY_SIZE /dev/sdb2
+sudo "$CURRENT_DIR/../../build/linux/x86_64/debug/bin/mkfs.nvmixfs" /dev/pmem0 $NVM_PHY_SIZE /dev/sdb2
 
 log "挂载设备 /dev/sdb2 到 /mnt/nvmixfs/..."
 sudo mount -t nvmixfs /dev/sdb2 /mnt/nvmixfs

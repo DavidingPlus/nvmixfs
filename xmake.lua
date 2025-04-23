@@ -37,6 +37,12 @@ target ("nvmix-cross-space")
 
     set_targetdir ("$(buildir)/$(plat)/$(arch)/$(mode)/bin/")
 
+target ("mkfs.nvmixfs")
+    set_kind ("binary")
+    add_files ("src/mkfs.nvmixfs/main.cpp")
+
+    set_targetdir ("$(buildir)/$(plat)/$(arch)/$(mode)/bin/")
+
 
 includes ("snippet")
 

@@ -20,9 +20,6 @@
 #include <asm/cacheflush.h>
 
 
-extern void *nvmixNvmVirtAddr;
-
-
 /**
  * @brief 文件系统类型结构。
  */
@@ -45,6 +42,9 @@ struct super_operations nvmixSuperOps = {
     .destroy_inode = nvmixDestroyInode,
     .write_inode = nvmixWriteInode,
 };
+
+
+extern void *nvmixNvmVirtAddr;
 
 extern struct address_space_operations nvmixAops;
 
@@ -110,7 +110,7 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
         res = -ENOMEM;
         goto ERR;
     }
-    // 将其设置为 vfs super_block 的私有数据。
+    // 将辅助结构 NvmixNvmHelper 设置为 vfs super_block 的私有数据。
     pSb->s_fs_info = pNsbh;
 
     // 设置文件系统的逻辑块大小，这是初始化超级块的第一步，后续的操作都依赖于正确的文件系统逻辑块大小（这里是 4 KIB）。
@@ -124,8 +124,9 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     }
 
     // 将超级块缓冲区指针传递给 NvmixNvmHelper 存储起来，后续的很多操作都需要更新磁盘超级块的元数据内容。
-    pNsbh->m_superBlockVirtAddr = nvmixNvmVirtAddr + NVMIX_SUPER_BLOCK_OFFSET;
-    pNsbh->m_inodeVirtAddr = nvmixNvmVirtAddr + NVMIX_INODE_BLOCK_OFFSET;
+    pNsbh->m_superBlockVirtAddr = (void *)((char *)nvmixNvmVirtAddr + NVMIX_SUPER_BLOCK_OFFSET);
+    pNsbh->m_inodeVirtAddr = (void *)((char *)nvmixNvmVirtAddr + NVMIX_INODE_BLOCK_OFFSET);
+
     // 这个地方不用 clflush_cache_range，因为只涉及到读取操作。
     pNsb = (struct NvmixSuperBlock *)(pNsbh->m_superBlockVirtAddr);
 
@@ -157,7 +158,7 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     {
         pr_err("nvmixfs: error when running function d_make_root().\n");
 
-        // 在初始化根目录失败时（如 d_make_root() 失败），需手动调用 iput() 减少通过 nvmixIget() 获取的根 inode 的引用计数。
+        // 初始化根目录失败时（如 d_make_root() 失败），需手动调用 iput() 减少通过 nvmixIget() 获取的根 inode 的引用计数。
         iput(pRootDirInode);
 
         res = -EINVAL;
@@ -257,7 +258,7 @@ int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
     pNih = NVMIX_I(pInode);
     pNi->m_dataBlockIndex = pNih->m_dataBlockIndex;
 
-    // 保证持久性内存 NVM 更改的顺序一致和同步性。具体见 snippet/ReservedMemoryTest/main.c。
+    // 需保证持久性内存 NVM 更改的顺序一致性和同步性。具体见 snippet/ReservedMemoryTest/main.c。
     clflush_cache_range(pNi, sizeof(struct NvmixInode));
 
     pr_info("nvmixfs: m_mode is %05o; m_dataBlockIndex is %d.\n", pNi->m_mode, pNi->m_dataBlockIndex);
@@ -297,7 +298,7 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
     // 未找到，从 NVM 空间中读取。
     pNsbh = (struct NvmixNvmHelper *)(pSb->s_fs_info);
 
-    // 同 nvmixFillSuper 中的 pNsb，这个地方也不用 clflush_cache_range。
+    // 同 nvmixFillSuper 中的 pNsb，这个地方也不用 clflush_cache_range，因为只是读操作。
     pNi = (struct NvmixInode *)(pNsbh->m_inodeVirtAddr) + ino;
 
     pInode->i_mode = pNi->m_mode;

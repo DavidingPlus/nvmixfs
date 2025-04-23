@@ -1,0 +1,5 @@
+target ("PmemTest")
+    set_kind ("binary")
+    add_files ("main.cpp")
+    set_languages ("c++11")
+    -- add_links ("pmem")

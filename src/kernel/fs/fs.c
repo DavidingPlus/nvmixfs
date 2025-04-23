@@ -93,7 +93,7 @@ void nvmixKillSb(struct super_block *pSb)
 
 int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
 {
-    struct NvmixSuperBlockHelper *pNsbh = NULL;
+    struct NvmixNvmHelper *pNsbh = NULL;
     struct buffer_head *pBh = NULL;
     struct NvmixSuperBlock *pNsb = NULL;
     struct inode *pRootDirInode = NULL;
@@ -101,8 +101,8 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     int res = 0;
 
 
-    // 为辅助结构 NvmixSuperBlockHelper 分配内存。
-    pNsbh = kzalloc(sizeof(struct NvmixSuperBlockHelper), GFP_KERNEL);
+    // 为辅助结构 NvmixNvmHelper 分配内存。
+    pNsbh = kzalloc(sizeof(struct NvmixNvmHelper), GFP_KERNEL);
     if (!pNsbh)
     {
         pr_err("nvmixfs: failed to allocate super block.\n");
@@ -123,23 +123,11 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
         goto ERR;
     }
 
-    // 读取磁盘上的超级块区的数据。
-    pBh = sb_bread(pSb, NVMIX_SUPER_BLOCK_INDEX);
-    if (!pBh)
-    {
-        pr_err("nvmixfs: could not read super block.\n");
-
-        res = -EIO;
-        goto ERR;
-    }
-
-    // 将超级块缓冲区指针传递给 NvmixSuperBlockHelper 存储起来，后续的很多操作都需要更新磁盘超级块的元数据内容。
+    // 将超级块缓冲区指针传递给 NvmixNvmHelper 存储起来，后续的很多操作都需要更新磁盘超级块的元数据内容。
     // 注意，既然传递指针存储起来了，那么正常流程下是不能使用 brelse() 释放 pBh 的。
-    pNsbh->m_pBh = pBh;
     pNsbh->m_superBlockVirtAddr = nvmixNvmVirtAddr + NVMIX_SUPER_BLOCK_OFFSET;
     pNsbh->m_inodeVirtAddr = nvmixNvmVirtAddr + NVMIX_INODE_BLOCK_OFFSET;
 
-    // pNsb = (struct NvmixSuperBlock *)(pBh->b_data);
     pNsb = (struct NvmixSuperBlock *)(pNsbh->m_superBlockVirtAddr);
 
     // 校验魔数。
@@ -198,18 +186,14 @@ ERR:
 
 void nvmixPutSuper(struct super_block *pSb)
 {
-    struct NvmixSuperBlockHelper *pNsbh = NULL;
+    struct NvmixNvmHelper *pNsbh = NULL;
 
 
     // s_fs_info 类似于 file 结构的 private_data，是文件系统中可被我们自己定义的私有数据信息。s_fs_info 在 fill_super 时会被初始化。这里拿到该部分数据以推进后续代码。
-    pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
+    pNsbh = (struct NvmixNvmHelper *)(pSb->s_fs_info);
 
-    // 标记缓冲区为脏，表示内容已被修改，需要写回磁盘。
-    mark_buffer_dirty(pNsbh->m_pBh);
-
-    // 释放缓冲区头。
-    brelse(pNsbh->m_pBh);
-    pNsbh->m_pBh = NULL;
+    pNsbh->m_superBlockVirtAddr = NULL;
+    pNsbh->m_inodeVirtAddr = NULL;
 
     pr_info("nvmixfs: released super block resources.\n");
 }
@@ -256,30 +240,18 @@ void nvmixDestroyInode(struct inode *pInode)
 int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
 {
     struct super_block *pSb = NULL;
-    struct buffer_head *pBh = NULL;
     struct NvmixInode *pNi = NULL;
     struct NvmixInodeHelper *pNih = NULL;
-    struct NvmixSuperBlockHelper *pNsbh = NULL;
+    struct NvmixNvmHelper *pNsbh = NULL;
     int res = 0;
 
 
     pSb = pInode->i_sb;
-    // 从 inode 区所在磁盘块读取数据。
-    pBh = sb_bread(pSb, NVMIX_INODE_BLOCK_INDEX);
-    if (!pBh)
-    {
-        pr_err("nvmixfs: could not read inode block.\n");
 
-        res = -EIO;
-        goto ERR;
-    }
-
-    pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
+    pNsbh = (struct NvmixNvmHelper *)(pSb->s_fs_info);
 
     // inode 区存储的是 NvmixInode 数组，也需要偏移。获取地址的逻辑同 dir.c 中 nvmixReaddir()。
-    // pNi = (struct NvmixInode *)(pBh->b_data) + pInode->i_ino;
     pNi = (struct NvmixInode *)(pNsbh->m_inodeVirtAddr) + pInode->i_ino;
-
 
     pNi->m_mode = pInode->i_mode;
     pNi->m_uid = i_uid_read(pInode);
@@ -291,14 +263,7 @@ int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
 
     pr_info("nvmixfs: m_mode is %05o; m_dataBlockIndex is %d.\n", pNi->m_mode, pNi->m_dataBlockIndex);
 
-    mark_buffer_dirty(pBh);
-
     pr_info("nvmixfs: wrote inode %lu successfully.\n", pInode->i_ino);
-
-
-ERR:
-    brelse(pBh);
-    pBh = NULL;
 
 
     return res;
@@ -307,10 +272,9 @@ ERR:
 struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
 {
     struct inode *pInode = NULL;
-    struct buffer_head *pBh = NULL;
     struct NvmixInode *pNi = NULL;
     struct NvmixInodeHelper *pNih = NULL;
-    struct NvmixSuperBlockHelper *pNsbh = NULL;
+    struct NvmixNvmHelper *pNsbh = NULL;
 
 
     // iget_locked() 是内核提供的函数，根据超级块 pSb 和 inode 号在 vfs 缓存中查找已有 inode。
@@ -331,24 +295,9 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
     // 如果在缓存中找到，直接返回。
     if (!(pInode->i_state & I_NEW)) return pInode;
 
-    // 未找到，从磁盘中读取。
-    pBh = sb_bread(pSb, NVMIX_INODE_BLOCK_INDEX);
-    if (!pBh)
-    {
-        pr_err("nvmixfs: could not read inode block.\n");
+    // 未找到，从 NVM 空间中读取。
+    pNsbh = (struct NvmixNvmHelper *)(pSb->s_fs_info);
 
-        iget_failed(pInode);
-
-        brelse(pBh);
-        pBh = NULL;
-
-
-        return NULL;
-    }
-
-    pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
-
-    // pNi = (struct NvmixInode *)(pBh->b_data) + ino;
     pNi = (struct NvmixInode *)(pNsbh->m_inodeVirtAddr) + ino;
 
     pInode->i_mode = pNi->m_mode;
@@ -392,9 +341,6 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
 
     // 与 iget_locked() 配合，确保新 inode 在初始化完成后安全解锁，保障并发访问的正确性。
     unlock_new_inode(pInode);
-
-    brelse(pBh);
-    pBh = NULL;
 
 
     return pInode;

@@ -152,7 +152,7 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
     struct buffer_head *pBh = NULL;
     struct super_block *pSb = NULL;
     struct NvmixDentry *pNd = NULL;
-    struct NvmixSuperBlockHelper *pNsbh = NULL;
+    struct NvmixNvmHelper *pNsbh = NULL;
     struct NvmixSuperBlock *pNsb = NULL;
     int i = 0;
     int res = 0;
@@ -197,17 +197,13 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
 
 
     // 既然删除了 inode，超级块的 m_imap 位图信息需要更新，否则空占 inode。inode 区的内容倒不需要清空，新创建的时候覆盖即可。
-    // 磁盘上超级块区的缓冲区指针一直存在于内存中，被 NvmixSuperBlockHelper 维护，不需要手动创建和释放。
-    pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info);
-    // pNsb = (struct NvmixSuperBlock *)(pNsbh->m_pBh->b_data);
+    // 磁盘上超级块区的缓冲区指针一直存在于内存中，被 NvmixNvmHelper 维护，不需要手动创建和释放。
+    pNsbh = (struct NvmixNvmHelper *)(pSb->s_fs_info);
     pNsb = (struct NvmixSuperBlock *)(pNsbh->m_superBlockVirtAddr);
 
     test_and_clear_bit(pInode->i_ino, &pNsb->m_imap);
 
     pr_info("nvmixfs: m_imap in nvmixUnlink(): %ld\n", pNsb->m_imap);
-
-    mark_buffer_dirty(pNsbh->m_pBh);
-
     pr_info("nvmixfs: unlinked file successfully.\n");
 
 
@@ -287,15 +283,14 @@ ERR:
 struct inode *nvmixNewInode(struct inode *pParentDirInode)
 {
     struct super_block *pSb = NULL;
-    struct NvmixSuperBlockHelper *pNsbh = NULL;
+    struct NvmixNvmHelper *pNsbh = NULL;
     struct NvmixSuperBlock *pNsb = NULL;
     struct inode *pInode = NULL;
     unsigned long index = 0;
 
 
     pSb = pParentDirInode->i_sb;
-    pNsbh = (struct NvmixSuperBlockHelper *)(pSb->s_fs_info); // pSb->s_fs_info 含义解释见 fs.c。
-    // pNsb = (struct NvmixSuperBlock *)(pNsbh->m_pBh->b_data);
+    pNsbh = (struct NvmixNvmHelper *)(pSb->s_fs_info); // pSb->s_fs_info 含义解释见 fs.c。
     pNsb = (struct NvmixSuperBlock *)(pNsbh->m_superBlockVirtAddr);
 
     // find_first_zero_bit() 是内核提供的一个位图操作函数，其作用是从给定的位图中查找第一个值为 0 的位，即未使用的空闲资源。m_imap 是我们自己定义的管理 inode 分配状态的位图信息，类型是 unsigned long，8 个字节，64 位。对本文件系统而言，使用低 32 位，每一位用于标识分配状态。
@@ -309,8 +304,6 @@ struct inode *nvmixNewInode(struct inode *pParentDirInode)
 
     // 原子性地测试并设置位图中的目标位，维护 m_imap 状态。
     test_and_set_bit(index, &pNsb->m_imap);
-    // 标记缓冲区为脏，表示内容已被修改，需要写回磁盘。
-    mark_buffer_dirty(pNsbh->m_pBh);
 
     pr_info("nvmixfs: m_imap in nvmixNewInode(): %ld\n", pNsb->m_imap);
 

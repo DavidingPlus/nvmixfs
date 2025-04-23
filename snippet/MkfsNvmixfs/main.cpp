@@ -26,9 +26,22 @@ int main(int argc, char const *argv[])
         return EXIT_FAILURE;
     }
 
+    const char *nvmDevicePath = argv[1];
+    const char *ssdDevicePath = argv[3];
+    unsigned long nvmPhySize = 0;
+
+    try
+    {
+        nvmPhySize = std::stoi(argv[2], nullptr, 16);
+    }
+    catch (const std::exception &e)
+    {
+        throw std::invalid_argument(std::string("Invalid argument: ") + argv[2]);
+    }
+
 
     // 写入元数据。
-    int nvmFd = open(argv[1], O_RDWR);
+    int nvmFd = open(nvmDevicePath, O_RDWR);
     if (-1 == nvmFd)
     {
         perror("open");
@@ -37,7 +50,7 @@ int main(int argc, char const *argv[])
         return EXIT_FAILURE;
     }
 
-    void *nvmVirtAddr = mmap(NULL, std::atoi(argv[2]), PROT_READ | PROT_WRITE, MAP_SHARED, nvmFd, 0);
+    void *nvmVirtAddr = mmap(NULL, nvmPhySize, PROT_READ | PROT_WRITE, MAP_SHARED, nvmFd, 0);
     if (MAP_FAILED == nvmVirtAddr)
     {
         perror("mmap");
@@ -75,7 +88,7 @@ int main(int argc, char const *argv[])
     };
 
     NvmixInode fileInode = {
-        .m_mode = S_IFDIR | 0664,
+        .m_mode = S_IFREG | 0664,
         .m_uid = 0,
         .m_gid = 0,
         .m_size = 0,
@@ -90,13 +103,13 @@ int main(int argc, char const *argv[])
     *(inodeVirtAddr + 1) = fileInode;
     msync(inodeVirtAddr + 1, sizeof(NvmixSuperBlock), MS_SYNC);
 
-    munmap(nvmVirtAddr, std::atoi(argv[2]));
+    munmap(nvmVirtAddr, nvmPhySize);
 
     close(nvmFd);
 
 
     // 写入 SSD 上的目录项数据。
-    int ssdFd = open(argv[3], O_RDWR);
+    int ssdFd = open(ssdDevicePath, O_RDWR);
     if (-1 == ssdFd)
     {
         perror("open");

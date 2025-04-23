@@ -41,7 +41,7 @@ log "使用的物理地址: $NVM_PHY_ADDR, 大小: $NVM_PHY_SIZE"
 sudo insmod "$CURRENT_DIR/../../build/linux/x86_64/debug/bin/nvmixfs.ko" nvmixNvmPhyAddr=$NVM_PHY_ADDR nvmixNvmPhySize=$NVM_PHY_SIZE
 
 log "使用 mkfs.nvmixfs 格式化设备 /dev/sdb2..."
-sudo "$CURRENT_DIR/../../build/linux/x86_64/debug/snippet/mkfs.nvmixfs" /dev/sdb2
+sudo "$CURRENT_DIR/../../build/linux/x86_64/debug/snippet/mkfs.nvmixfs" /dev/pmem0 $NVM_PHY_SIZE /dev/sdb2
 
 log "挂载设备 /dev/sdb2 到 /mnt/nvmixfs/..."
 sudo mount -t nvmixfs /dev/sdb2 /mnt/nvmixfs

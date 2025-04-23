@@ -56,7 +56,7 @@ static int __init nvmixInit(void)
     // memremap()：用于映射普通内存（如 RAM、持久内存等）到内核虚拟地址空间。支持灵活的缓存策略（如 Write-Through、Write-Back）。
     // memremap() 的第三个参数指定缓存类型：MEMREMAP_WB Write-Back 缓存（性能优化）。MEMREMAP_WT Write-Through 缓存（写入直达内存）。MEMREMAP_UC Uncached（类似 ioremap）。
     nvmixNvmVirtAddr = memremap(nvmixNvmPhyAddr, nvmixNvmPhySize, MEMREMAP_WB);
-    if (!nvmixNvmVirtAddr)
+    if (IS_ERR(nvmixNvmVirtAddr))
     {
         pr_err("nvmixfs: failed to map reserved memory.\n");
 

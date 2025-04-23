@@ -28,7 +28,7 @@ static __init int reservedMemoryInit(void)
 
     // 映射物理内存，使用回写缓存。
     reservedMem = memremap(phyAddr, size, MEMREMAP_WB);
-    if (!reservedMem)
+    if (IS_ERR(reservedMem))
     {
         pr_err("ReservedMemoryTest: failed to map reserved memory.\n");
 
@@ -45,8 +45,11 @@ static __init int reservedMemoryInit(void)
     pWrite = (int *)((char *)reservedMem + offset);
     *pWrite = writeVal;
 
+    // 将数据将 CPU 缓存刷回内存。
+    clflush(pWrite);
+
     // 内存屏障，保证写入完成。
-    mb();
+    wmb();
 
     // 读取测试值验证。
     pRead = (int *)reservedMem;

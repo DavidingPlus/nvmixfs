@@ -34,20 +34,9 @@ NVMIX_EXTERN_C_BEGIN
 #define NVMIX_BLOCK_SIZE 4096
 
 /**
- * @brief 超级块的逻辑块号。
- * @details 逻辑块号的值是相对于文件系统的起始位置，下面的 inode 和起始数据块同理。
- */
-#define NVMIX_SUPER_BLOCK_INDEX 0
-
-/**
  * @brief 超级块区在 NVM 空间上的偏移量。
  */
 #define NVMIX_SUPER_BLOCK_OFFSET 0
-
-/**
- * @brief inode 区的逻辑块号。
- */
-#define NVMIX_INODE_BLOCK_INDEX 1
 
 /**
  * @brief inode 区在 NVM 空间上的偏移量。
@@ -57,7 +46,7 @@ NVMIX_EXTERN_C_BEGIN
 /**
  * @brief 起始数据块的逻辑块号。
  */
-#define NVMIX_FIRST_DATA_BLOCK_INDEX 2
+#define NVMIX_FIRST_DATA_BLOCK_INDEX 0
 
 /**
  * @brief 文件系统最多的 inode 数量。

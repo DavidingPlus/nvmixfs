@@ -117,6 +117,12 @@ int main(int argc, char const *argv[])
         return EXIT_FAILURE;
     }
 
+    // 将本文件系统管理的所有数据块清空。
+    const char zeroBuf[NVMIX_BLOCK_SIZE] = {0};
+    // write() 执行以后文件偏移量会自动往后移，因此不用手动设置。
+    for (int i = 0; i < NVMIX_MAX_INODE_NUM; ++i) write(nvmFd, zeroBuf, sizeof(zeroBuf));
+
+
     NvmixDentry fileDentry = {
         .m_ino = 1,
     };

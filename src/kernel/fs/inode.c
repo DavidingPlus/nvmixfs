@@ -14,6 +14,7 @@
 
 #include <linux/cred.h>
 #include <linux/buffer_head.h>
+#include <asm/cacheflush.h>
 
 
 /**
@@ -203,7 +204,10 @@ int nvmixUnlink(struct inode *pParentDirInode, struct dentry *pDentry)
 
     test_and_clear_bit(pInode->i_ino, &pNsb->m_imap);
 
+    clflush_cache_range(pNsb, sizeof(struct NvmixSuperBlock));
+
     pr_info("nvmixfs: m_imap in nvmixUnlink(): %ld\n", pNsb->m_imap);
+
     pr_info("nvmixfs: unlinked file successfully.\n");
 
 
@@ -304,6 +308,8 @@ struct inode *nvmixNewInode(struct inode *pParentDirInode)
 
     // 原子性地测试并设置位图中的目标位，维护 m_imap 状态。
     test_and_set_bit(index, &pNsb->m_imap);
+
+    clflush_cache_range(pNsb, sizeof(struct NvmixSuperBlock));
 
     pr_info("nvmixfs: m_imap in nvmixNewInode(): %ld\n", pNsb->m_imap);
 

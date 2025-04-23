@@ -17,6 +17,7 @@
 #include <linux/export.h>
 #include <linux/buffer_head.h>
 #include <linux/slab.h>
+#include <asm/cacheflush.h>
 
 
 extern void *nvmixNvmVirtAddr;
@@ -94,7 +95,6 @@ void nvmixKillSb(struct super_block *pSb)
 int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
 {
     struct NvmixNvmHelper *pNsbh = NULL;
-    struct buffer_head *pBh = NULL;
     struct NvmixSuperBlock *pNsb = NULL;
     struct inode *pRootDirInode = NULL;
     struct dentry *pRootDirDentry = NULL;
@@ -124,10 +124,9 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     }
 
     // 将超级块缓冲区指针传递给 NvmixNvmHelper 存储起来，后续的很多操作都需要更新磁盘超级块的元数据内容。
-    // 注意，既然传递指针存储起来了，那么正常流程下是不能使用 brelse() 释放 pBh 的。
     pNsbh->m_superBlockVirtAddr = nvmixNvmVirtAddr + NVMIX_SUPER_BLOCK_OFFSET;
     pNsbh->m_inodeVirtAddr = nvmixNvmVirtAddr + NVMIX_INODE_BLOCK_OFFSET;
-
+    // 这个地方不用 clflush_cache_range，因为只涉及到读取操作。
     pNsb = (struct NvmixSuperBlock *)(pNsbh->m_superBlockVirtAddr);
 
     // 校验魔数。
@@ -172,9 +171,6 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
 
     // 错误流程分支，正常流程走不到这里，于上面已退出。
 ERR:
-    brelse(pBh);
-    pBh = NULL;
-
     pSb->s_fs_info = NULL;
 
     kzfree(pNsbh);
@@ -261,6 +257,9 @@ int nvmixWriteInode(struct inode *pInode, struct writeback_control *pWbc)
     pNih = NVMIX_I(pInode);
     pNi->m_dataBlockIndex = pNih->m_dataBlockIndex;
 
+    // 保证持久性内存 NVM 更改的顺序一致和同步性。具体见 snippet/ReservedMemoryTest/main.c。
+    clflush_cache_range(pNi, sizeof(struct NvmixInode));
+
     pr_info("nvmixfs: m_mode is %05o; m_dataBlockIndex is %d.\n", pNi->m_mode, pNi->m_dataBlockIndex);
 
     pr_info("nvmixfs: wrote inode %lu successfully.\n", pInode->i_ino);
@@ -298,6 +297,7 @@ struct inode *nvmixIget(struct super_block *pSb, unsigned long ino)
     // 未找到，从 NVM 空间中读取。
     pNsbh = (struct NvmixNvmHelper *)(pSb->s_fs_info);
 
+    // 同 nvmixFillSuper 中的 pNsb，这个地方也不用 clflush_cache_range。
     pNi = (struct NvmixInode *)(pNsbh->m_inodeVirtAddr) + ino;
 
     pInode->i_mode = pNi->m_mode;

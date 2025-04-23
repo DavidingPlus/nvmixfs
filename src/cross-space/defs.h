@@ -2,7 +2,7 @@
  * @file defs.h
  * @author DavidingPlus (davidingplus@qq.com)
  * @brief 本文件系统的全局宏和数据结构的头文件。
- * @details 本文件定义了本文件系统必要的元数据，需要存储在磁盘上。注意与内存中 vfs 的数据结构区分开来，此文件的数据结构是本文件系统自己设计并且维护的。本文件需要被用户层程序 MkfsNvmixfs 引用，因此文件中不能放置任何内核 vfs 的数据结构或类型，例如 struct inode、struct buffer_head 等。但在实际过程中本文件系统的元数据结构显然是需要与 vfs 的数据结构打交道的，因此设计了辅助结构 NvmixNvmHelper 和 NvmixInodeHelper 等。
+ * @details 本文件定义了本文件系统必要的元数据，需存储在 NVM 空间上，注意与内存中 vfs 的数据结构区分开来。本文件的数据结构是本文件系统自己设计并且维护的，并且本文件需要被用户层程序 mkfs.nvmixfs 引用，因此文件中不能放置任何内核 vfs 的数据结构或类型，例如 struct inode、struct buffer_head 等。但在实际过程中本文件系统的元数据结构显然是需要与 vfs 的数据结构打交道的，因此设计了辅助结构 NvmixNvmHelper 和 NvmixInodeHelper 等。
  *
  * Copyright (c) 2025 电子科技大学 刘治学
  *
@@ -50,13 +50,13 @@ NVMIX_EXTERN_C_BEGIN
 
 /**
  * @brief 文件系统最多的 inode 数量。
- * @todo 目前先设置为 32，后续增加并修正设计和设计。
+ * @todo 目前先设置为 32，后续增加并完善设计。
  */
 #define NVMIX_MAX_INODE_NUM 32
 
 /**
  * @brief 目录下最多包含的目录项数量。
- * @details 注意，此项与 NVMIX_MAX_INODE_NUM 并不是一个东西。NVMIX_MAX_INODE_NUM 是文件系统总 inode 的数量，NVMIX_MAX_ENTRY_NUM 是一个目录下最多包含的目录项数量。NVMIX_MAX_ENTRY_NUM 应小于等于 NVMIX_MAX_INODE_NUM。
+ * @details 注意，此项与 NVMIX_MAX_INODE_NUM 并不是一个东西。NVMIX_MAX_INODE_NUM 是文件系统总 inode 的数量，NVMIX_MAX_ENTRY_NUM 是一个目录下最多包含的目录项数量。从定义可知，NVMIX_MAX_ENTRY_NUM 应小于等于 NVMIX_MAX_INODE_NUM。
  */
 #define NVMIX_MAX_ENTRY_NUM 32
 
@@ -91,8 +91,8 @@ struct NvmixVersion
 
 /**
  * @struct NvmixSuperBlock
- * @brief 定义了文件系统在磁盘上的超级块布局，用于持久化存储文件系统元数据。
- * @todo 目前 NvmixSuperBlock 结构体占据的空间远小于 4 KIB，但仍需要使用一个 4 KIB 的逻辑块（文件系统必须以一定大小的块为单位），可能存在空间浪费的问题。目前暂不做优化。未使用空间用作保留，便于未来扩展。
+ * @brief 文件系统超级块的元数据信息。
+ * @todo 目前 NvmixSuperBlock 结构体占据的空间远小于 4 KIB，但仍需要使用一个 4 KIB 的逻辑块（文件系统必须以一定大小的块为单位），可能存在空间浪费的问题。目前暂不做优化。未使用空间用作保留，便于未来扩展。另外迁移到 NVM 空间以后，其实是不需要考虑以块为单位的问题的，但目前为了简便，仍然按照块划分的形式处理，后续做内存分配的设计。
  */
 struct NvmixSuperBlock
 {
@@ -116,7 +116,8 @@ struct NvmixSuperBlock
 
 /**
  * @struct NvmixInode
- * @brief inode 的元数据信息。
+ * @brief 文件系统 inode 的元数据信息。
+ * @details 每个 inode 都有一个 NvmixInode 结构。NVM 空间上 inode 区存储的就是 NvmixInode[] 数组。
  */
 struct NvmixInode
 {
@@ -158,7 +159,7 @@ struct NvmixInode
 /**
  * @struct NvmixDentry
  * @brief 目录对应的数据块的各条目录项的信息。
- * @details 目录项指目录下的文件或子目录（包括 . 和 ..）。本结构类似 vfs 的 dentry 结构的作用，将 inode 和 目录项的名字关联在一起。目录的数据块存储的就是 NvmixDentry[] 数组，记录该目录下所有目录项的信息。
+ * @details 目录项指目录下的文件或子目录（包括 . 和 ..）。本结构类似 vfs 的 dentry 结构的作用，将 inode 和目录项的名字关联在一起。目录的数据块存储的就是 NvmixDentry[] 数组，记录该目录下所有目录项的信息。
  */
 struct NvmixDentry
 {

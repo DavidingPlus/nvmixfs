@@ -46,7 +46,9 @@ inode 区存放 NvmixInode 数组，用于管理本文件系统的所有 inode �
 
 data 区以 4 KiB 为单位，目前每个文件或目录仅使用一个数据块，数据块下标即作为 file->mapping 索引，故目前对文件的最大大小限制为 4 KiB。文件类型的数据块以字节流形式存储实际内容。目录类型的数据块存储 NvmixDentry 数组，记录该目录下所有的目录项的信息。同理做了最大目录项个数的限制，4 KiB 的大小完全够用。
 
-# 已完成
+# 已完成工作
+
+## 本科毕设
 
 1. 不考虑 NVM，完成基于 DRAM + SSD 的传统文件系统的基本框架的搭建，留出数据结构和接口。初版只完成最简单的设计。
 2. 基本完成框架中预留接口的实现，已实现功能包括文件的创建、删除和修改，目录的创建和删除等。
@@ -54,13 +56,31 @@ data 区以 4 KiB 为单位，目前每个文件或目录仅使用一个数据�
 4. 使用持久性内存模拟 NVM 空间，将其映射到内核虚拟地址空间，并拿到虚拟起始地址用于管理，完成架构性的调研和思考。
 5. 在上一步的基础上，在 NVM 上存储元数据，并修改文件系统涉及到超级块和 inode 区元数据的细节逻辑，使其正常工作。
 
-# 代办
+## 后续扩展
 
-暂无。
+1. 已完成 README 文档数据布局和具体设计的部分。
+
+# 代办工作
+
+## 本科毕设
+
+无，已全部完成。
+
+## 后续扩展
+
+1. 完善 README 文档构建流程和测试流程的部分。
+
+# 构建流程
+
+（待补）
+
+# 测试流程
+
+（待补）
 
 # 参考文档
 
-1. [Linux kernel Lab学习笔记 | 北极落小雪](https://hanqi-blogs.cn/2024/linux kernel lab -- Notes/)
+1. [Linux kernel Lab学习笔记 | 北极落小雪](https://hanqi-blogs.cn/2024/linux%20kernel%20lab%20--%20Notes/)
 2. [linux-kernel-labs/linux: Linux kernel source tree](https://github.com/linux-kernel-labs/linux/)
 3. [使用DRAM模拟持久内存（Persistent Memory）_dram da模拟输出-CSDN博客](https://blog.csdn.net/qq_43845988/article/details/127018049)
 

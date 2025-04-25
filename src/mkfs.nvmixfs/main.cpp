@@ -87,8 +87,17 @@ int main(int argc, char const *argv[])
     NvmixSuperBlock *superBlockVirtAddr = (NvmixSuperBlock *)((char *)nvmVirtAddr + NVMIX_SUPER_BLOCK_OFFSET);
 
     *superBlockVirtAddr = superBlock;
+
+    // msync() 是一个用户态函数，用于将通过 mmap() 映射的内存区域中的修改数据强制同步回磁盘或其他底层存储设备。
     // 写操作在用户层通过 msync 同步，在内核层通过 clflush_cache_range 同步。
-    msync(superBlockVirtAddr, sizeof(NvmixSuperBlock), MS_SYNC);
+    int res = msync(superBlockVirtAddr, sizeof(NvmixSuperBlock), MS_SYNC);
+    if (-1 == res)
+    {
+        perror("msync");
+
+
+        return EXIT_FAILURE;
+    }
 
     NvmixInode rootDirInode = {
         .m_mode = S_IFDIR | 0755,
@@ -107,14 +116,23 @@ int main(int argc, char const *argv[])
     };
 
     NvmixInode *inodeVirtAddr = (NvmixInode *)((char *)nvmVirtAddr + NVMIX_INODE_BLOCK_OFFSET);
+
     NvmixInode *rootDirInodeVirtAddr = inodeVirtAddr;
     NvmixInode *fileInodeVirtAddr = inodeVirtAddr + 1;
 
     *rootDirInodeVirtAddr = rootDirInode;
-    msync(rootDirInodeVirtAddr, sizeof(NvmixInode), MS_SYNC);
-
     *fileInodeVirtAddr = fileInode;
-    msync(fileInodeVirtAddr, sizeof(NvmixInode), MS_SYNC);
+
+    // 注意：msync() 的参数给定的地址是需要页对齐的。因此这个地方的写入需要合并在一起，不能分开，否则 msync 同步 fileInodeVirtAddr 会失败。
+    // 内核的 clflush_cache_range() 的地址不需要页对齐。
+    res = msync(inodeVirtAddr, 2 * sizeof(NvmixInode), MS_SYNC);
+    if (-1 == res)
+    {
+        perror("msync");
+
+
+        return EXIT_FAILURE;
+    }
 
     munmap(nvmVirtAddr, nvmPhySize);
 

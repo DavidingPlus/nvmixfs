@@ -65,6 +65,8 @@ static __init int reservedMemoryInit(void)
      *     mb();
      * }
      * EXPORT_SYMBOL_GPL(clflush_cache_range);
+     *
+     * 与用户层函数 msync() 不同，clflush_cache_range() 不需要页对齐。
      */
     clflush_cache_range(pWrite, sizeof(int));
 

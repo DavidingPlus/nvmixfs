@@ -87,8 +87,17 @@ int main(int argc, char const *argv[])
     NvmixSuperBlock *superBlockVirtAddr = (NvmixSuperBlock *)((char *)nvmVirtAddr + NVMIX_SUPER_BLOCK_OFFSET);
 
     *superBlockVirtAddr = superBlock;
+
+    // msync() 是一个用户态函数，用于将通过 mmap() 映射的内存区域中的修改数据强制同步回磁盘或其他底层存储设备。
     // 写操作在用户层通过 msync 同步，在内核层通过 clflush_cache_range 同步。
-    msync(superBlockVirtAddr, sizeof(NvmixSuperBlock), MS_SYNC);
+    int res = msync(superBlockVirtAddr, sizeof(NvmixSuperBlock), MS_SYNC);
+    if (-1 == res)
+    {
+        perror("msync");
+
+
+        return EXIT_FAILURE;
+    }
 
     NvmixInode rootDirInode = {
         .m_mode = S_IFDIR | 0755,
@@ -107,14 +116,23 @@ int main(int argc, char const *argv[])
     };
 
     NvmixInode *inodeVirtAddr = (NvmixInode *)((char *)nvmVirtAddr + NVMIX_INODE_BLOCK_OFFSET);
+
     NvmixInode *rootDirInodeVirtAddr = inodeVirtAddr;
     NvmixInode *fileInodeVirtAddr = inodeVirtAddr + 1;
 
     *rootDirInodeVirtAddr = rootDirInode;
-    msync(rootDirInodeVirtAddr, sizeof(NvmixInode), MS_SYNC);
-
     *fileInodeVirtAddr = fileInode;
-    msync(fileInodeVirtAddr, sizeof(NvmixInode), MS_SYNC);
+
+    // 注意：msync() 的参数给定的地址是需要页对齐的。因此这个地方的写入需要合并在一起，不能分开，否则 msync 同步 fileInodeVirtAddr 会失败。
+    // 内核的 clflush_cache_range() 的地址不需要页对齐。
+    res = msync(inodeVirtAddr, 2 * sizeof(NvmixInode), MS_SYNC);
+    if (-1 == res)
+    {
+        perror("msync");
+
+
+        return EXIT_FAILURE;
+    }
 
     munmap(nvmVirtAddr, nvmPhySize);
 
@@ -132,17 +150,16 @@ int main(int argc, char const *argv[])
     }
 
     // 将本文件系统管理的所有数据块清空。
-    const char zeroBuf[NVMIX_BLOCK_SIZE] = {0};
+    const char zeroStr[NVMIX_BLOCK_SIZE] = {0};
 
     // write() 执行以后文件偏移量会自动往后移，因此不用手动设置。
-    for (int i = 0; i < NVMIX_MAX_INODE_NUM; ++i) write(nvmFd, zeroBuf, sizeof(zeroBuf));
-
+    // 上个版本这里是 nvmFd，是不对的，应该是 ssdFd，但是程序没有跑出问题。原因是前面释放了 nvmFd 文件描述符对应的文件，但是变量 nvmFd 没有清空，例如是 3。新打开的文件优先使用空闲的文件描述符，因此 ssdFd 的值也是 3，这样歪打正着就成了，但是实际上是不符合语义的。
+    for (int i = 0; i < NVMIX_MAX_INODE_NUM; ++i) write(ssdFd, zeroStr, sizeof(zeroStr));
 
     NvmixDentry fileDentry = {
         .m_ino = 1,
     };
     strcpy(fileDentry.m_name, "reserved.txt");
-
 
     lseek(ssdFd, NVMIX_FIRST_DATA_BLOCK_INDEX * NVMIX_BLOCK_SIZE, SEEK_SET);
 

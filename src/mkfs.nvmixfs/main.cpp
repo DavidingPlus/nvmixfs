@@ -150,17 +150,16 @@ int main(int argc, char const *argv[])
     }
 
     // 将本文件系统管理的所有数据块清空。
-    const char zeroBuf[NVMIX_BLOCK_SIZE] = {0};
+    const char zeroStr[NVMIX_BLOCK_SIZE] = {0};
 
     // write() 执行以后文件偏移量会自动往后移，因此不用手动设置。
-    for (int i = 0; i < NVMIX_MAX_INODE_NUM; ++i) write(nvmFd, zeroBuf, sizeof(zeroBuf));
-
+    // 上个版本这里是 nvmFd，是不对的，应该是 ssdFd，但是程序没有跑出问题。原因是前面释放了 nvmFd 文件描述符对应的文件，但是变量 nvmFd 没有清空，例如是 3。新打开的文件优先使用空闲的文件描述符，因此 ssdFd 的值也是 3，这样歪打正着就成了，但是实际上是不符合语义的。
+    for (int i = 0; i < NVMIX_MAX_INODE_NUM; ++i) write(ssdFd, zeroStr, sizeof(zeroStr));
 
     NvmixDentry fileDentry = {
         .m_ino = 1,
     };
     strcpy(fileDentry.m_name, "reserved.txt");
-
 
     lseek(ssdFd, NVMIX_FIRST_DATA_BLOCK_INDEX * NVMIX_BLOCK_SIZE, SEEK_SET);
 

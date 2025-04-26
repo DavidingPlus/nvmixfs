@@ -6,10 +6,10 @@ option ("linux-headers", {showmenu = true, description = "Set linux-headers path
 option ("with-gtest", {showmenu = true, description = "Whether to enable unit test by GTest.", default = false})
 
 
-set_configdir ("$(buildir)/config")
+set_configdir ("$(builddir)/config")
 add_configfiles ("src/config.h.in")
 
-add_includedirs ("$(buildir)/config/")
+add_includedirs ("$(builddir)/config/")
 add_includedirs ("src/")
 add_includedirs ("src/cross-space/")
 add_includedirs ("src/kernel/")
@@ -29,19 +29,19 @@ target ("nvmixfs")
     set_languages ("gnu99")
     add_cflags ("-O1")
 
-    set_targetdir ("$(buildir)/$(plat)/$(arch)/$(mode)/bin/")
+    set_targetdir ("$(builddir)/$(plat)/$(arch)/$(mode)/bin/")
 
 target ("nvmix-cross-space")
     set_kind ("shared")
     add_files ("src/cross-space/*.c")
 
-    set_targetdir ("$(buildir)/$(plat)/$(arch)/$(mode)/bin/")
+    set_targetdir ("$(builddir)/$(plat)/$(arch)/$(mode)/bin/")
 
 target ("mkfs.nvmixfs")
     set_kind ("binary")
     add_files ("src/mkfs.nvmixfs/main.cpp")
 
-    set_targetdir ("$(buildir)/$(plat)/$(arch)/$(mode)/bin/")
+    set_targetdir ("$(builddir)/$(plat)/$(arch)/$(mode)/bin/")
 
 
 includes ("snippet")

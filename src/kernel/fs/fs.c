@@ -17,6 +17,7 @@
 #include <linux/export.h>
 #include <linux/buffer_head.h>
 #include <linux/slab.h>
+#include <linux/ktime.h>
 #include <asm/cacheflush.h>
 
 
@@ -99,6 +100,11 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
     struct inode *pRootDirInode = NULL;
     struct dentry *pRootDirDentry = NULL;
     int res = 0;
+    u64 startTime = 0, endTime = 0, duration = 0;
+
+
+    // 获得初始化超级块的起始时间，单位是纳秒。
+    startTime = ktime_get_ns();
 
 
     // 为辅助结构 NvmixNvmHelper 分配内存。
@@ -165,6 +171,14 @@ int nvmixFillSuper(struct super_block *pSb, void *pData, int silent)
         goto ERR;
     }
     pSb->s_root = pRootDirDentry;
+
+
+    // 获得初始化超级块的结束时间，单位是纳秒。
+    endTime = ktime_get_ns();
+    // 计算初始化超级块整个过程的时间。
+    duration = endTime - startTime;
+
+    pr_info("nvmixfs: function nvmixFillSuper ran for %llu ns.\n", (unsigned long long)duration);
 
 
     return res;

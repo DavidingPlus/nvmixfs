@@ -16,7 +16,7 @@ jobs:
     container:
       image: ubuntu:20.04
     env:
-      KERNEL_VERSION: "5.4.0-214-generic"
+      KERNEL_VERSION: "5.4.0-215-generic"
 
     steps:
       - uses: actions/checkout@v4

@@ -47,9 +47,6 @@ jobs:
           alias xmake="~/.local/bin/xmake"
           export XMAKE_ROOT=y
 
-          # keep xmake up to date
-          xmake update -s dev
-
       - name: Install Conan
         run: |
 

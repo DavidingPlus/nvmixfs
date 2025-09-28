@@ -51,9 +51,6 @@ jobs:
           alias xmake="~/.local/bin/xmake"
           export XMAKE_ROOT=y
 
-          # keep xmake up to date
-          xmake update -s dev
-
       # conan needs pip(by apt) and cmake(by snap recommended)
       - name: Install Conan
         run: |

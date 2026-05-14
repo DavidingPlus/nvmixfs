@@ -20,20 +20,43 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check Toolchain
+        run: |
+          curl --version
+          gcc -v
+          g++ -v
+          python3 -V
+          pip --version
+          cmake --version
+          git --version
+          xmake --version
+          conan --version
+
+      - name: Detect Kernel Headers
+        run: |
+          KERNEL_HEADER_DIR=$(find /usr/src -maxdepth 1 -type d -name 'linux-headers-*' | head -n 1)
+
+          echo "KERNEL_HEADER_DIR=${KERNEL_HEADER_DIR}"
+
+          if [ -z "$KERNEL_HEADER_DIR" ]; then
+            echo "Linux headers not found!"
+            exit 1
+          fi
+
+          echo "KERNEL_HEADER_DIR=${KERNEL_HEADER_DIR}" >> $GITHUB_ENV
+
       - name: Configure XMake
         working-directory: ${{github.workspace}}
         run: |
 
-          alias xmake="~/.local/bin/xmake"
           export XMAKE_ROOT=y
 
-          xmake f -m release --linux-headers=/usr/src/linux-headers-${KERNEL_VERSION}/ -y
+          xmake f -m release --linux-headers="${KERNEL_HEADER_DIR}/" -y
 
       - name: Build Targets
         working-directory: ${{github.workspace}}
         run: |
 
-          alias xmake="~/.local/bin/xmake"
           export XMAKE_ROOT=y
 
           xmake build

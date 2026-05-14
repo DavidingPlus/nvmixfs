@@ -15,49 +15,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:20.04
-    env:
-      KERNEL_VERSION: "5.4.0-216-generic"
+      image: ghcr.io/davidingplus/nvmixfs-docker-runtime:latest
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Dependencies
-        run: |
-
-          apt update
-
-          apt install curl -y
-
-          apt install build-essential -y
-
-          apt install linux-headers-${KERNEL_VERSION} -y
-
-          apt install python3 python3-pip -y
-
-          # cmake dependency which needs extra terminal input, annoying
-          # see more at https://blog.csdn.net/jiangjiang_jian/article/details/100731400/
-          DEBIAN_FRONTEND=noninteractive apt install tzdata -y
-
-          # conan needs cmake and pip
-          apt install cmake -y
-
-      - name: Install XMake
-        run: |
-
-          curl -fsSL https://xmake.io/shget.text | bash
-
-          # use xmake as root
-          alias xmake="~/.local/bin/xmake"
-          export XMAKE_ROOT=y
-
-      # conan needs pip(by apt) and cmake(by snap recommended)
-      - name: Install Conan
-        run: |
-
-          pip install conan==2.6.0
-
-          conan profile detect
 
       - name: Configure XMake
         working-directory: ${{github.workspace}}

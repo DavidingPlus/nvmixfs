@@ -33,7 +33,11 @@ jobs:
 
       - name: Detect Kernel Headers
         run: |
-          KERNEL_HEADER_DIR=$(find /usr/src -maxdepth 1 -type d -name 'linux-headers-*' | head -n 1)
+          KERNEL_HEADER_DIR=$(find /usr/src \
+            -maxdepth 1 \
+            -type d \
+            -name 'linux-headers-*-generic' \
+            | head -n 1)
 
           echo "KERNEL_HEADER_DIR=${KERNEL_HEADER_DIR}"
 
